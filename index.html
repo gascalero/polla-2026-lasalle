@@ -272,6 +272,7 @@
       <button class="tab active" onclick="irA('partidos',this)">Partidos</button>
       <button class="tab" onclick="irA('predicciones',this)">Mis predicciones</button>
       <button class="tab" onclick="irA('ranking',this)">Ranking</button>
+      <button class="tab" onclick="irA('reglas',this)">📋 Reglas</button>
       <button class="tab" onclick="abrirAdmin()">⚙ Admin</button>
     </nav>
   </div>
@@ -325,6 +326,40 @@
     <div class="sec-titulo">🏆 Ranking</div>
     <div id="ranking-pills" class="pills"></div>
     <div id="ranking-tabla"><div class="loading"><div class="spinner"></div></div></div>
+  </div>
+</div>
+
+<!-- ── VISTA REGLAS ── -->
+<div id="vista-reglas" class="vista">
+  <div class="sec">
+    <div class="sec-titulo">📋 Sistema de puntos</div>
+    <p style="font-size:13px;font-weight:700;color:var(--verde);margin-bottom:8px;">Fase de Grupos</p>
+    <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px;">
+      <div style="display:flex;align-items:center;gap:10px;font-size:13px;"><span style="font-size:18px;">🥇</span><span><b>3 puntos</b> — Marcador exacto</span></div>
+      <div style="display:flex;align-items:center;gap:10px;font-size:13px;"><span style="font-size:18px;">✅</span><span><b>1 punto</b> — Acertaste el ganador o el empate</span></div>
+      <div style="display:flex;align-items:center;gap:10px;font-size:13px;"><span style="font-size:18px;">⚽</span><span><b>+0.5 puntos</b> — Por cada equipo cuyos goles acertaste (solo si no hay exacto)</span></div>
+    </div>
+    <p style="font-size:13px;font-weight:700;color:var(--verde);margin-bottom:8px;">Eliminatorias</p>
+    <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px;">
+      <div style="display:flex;align-items:center;gap:10px;font-size:13px;"><span style="font-size:18px;">🥇</span><span><b>3 puntos</b> — Marcador exacto en tiempo regular/extra</span></div>
+      <div style="display:flex;align-items:center;gap:10px;font-size:13px;"><span style="font-size:18px;">✅</span><span><b>1 punto</b> — Acertaste el ganador o el empate en tiempo regular/extra</span></div>
+      <div style="display:flex;align-items:center;gap:10px;font-size:13px;"><span style="font-size:18px;">⚽</span><span><b>+0.5 puntos</b> — Por cada equipo cuyos goles acertaste (solo si no hay exacto)</span></div>
+      <div style="display:flex;align-items:center;gap:10px;font-size:13px;"><span style="font-size:18px;">🥅</span><span><b>+1 punto bonus</b> — Predijiste que iba a penaltis <u>y</u> acertaste el equipo ganador de la tanda</span></div>
+    </div>
+    <div style="background:var(--dorado-claro);border:1px solid var(--dorado);border-radius:8px;padding:12px;margin-bottom:16px;">
+      <p style="font-size:12px;font-weight:700;color:#7a5900;margin-bottom:6px;">Ejemplos</p>
+      <p style="font-size:12px;color:#7a5900;margin:2px 0;">Predijiste <b>2-1</b>, resultado <b>2-1</b> → 3 pts</p>
+      <p style="font-size:12px;color:#7a5900;margin:2px 0;">Predijiste <b>3-1</b>, resultado <b>2-1</b> → 1 + 0.5 = 1.5 pts</p>
+      <p style="font-size:12px;color:#7a5900;margin:2px 0;">Predijiste <b>2-0</b>, resultado <b>2-1</b> → 1 + 0.5 = 1.5 pts</p>
+      <p style="font-size:12px;color:#7a5900;margin:2px 0;">Predijiste <b>0-1</b>, resultado <b>2-1</b> → 0 + 0.5 = 0.5 pts</p>
+      <p style="font-size:12px;color:#7a5900;margin:2px 0;">Predijiste <b>2-1 + penaltis + Local</b>, termina 1-1, Local gana penaltis → 0 + 1 = 1 pt</p>
+    </div>
+    <div style="background:var(--verde-claro);border:1px solid #b2d8cc;border-radius:8px;padding:12px;">
+      <p style="font-size:12px;font-weight:700;color:var(--verde);margin-bottom:6px;">⚠️ Importante</p>
+      <p style="font-size:12px;color:var(--verde);margin:2px 0;">• Las predicciones se cierran al inicio de cada partido</p>
+      <p style="font-size:12px;color:var(--verde);margin:2px 0;">• Solo puedes predecir partidos habilitados por el organizador</p>
+      <p style="font-size:12px;color:var(--verde);margin:2px 0;">• En eliminatorias el resultado de penaltis NO afecta el marcador registrado</p>
+    </div>
   </div>
 </div>
 
