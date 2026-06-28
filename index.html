@@ -359,8 +359,23 @@ const _0x55e389=_0x2570;(function(_0x17f43a,_0x5f56a3){const _0x535321=_0x2570,_
 </script>
 
 <script>
+function calcPtsG(partido, pred) {
+  if (!pred || partido.goles_local === null) return { total: 0, exacto: false, ganador: false, golesL: false, golesV: false };
+  const rL = partido.goles_local, rV = partido.goles_visita;
+  const pL = parseInt(pred.goles_local), pV = parseInt(pred.goles_visita);
+  const exacto = pL === rL && pV === rV;
+  const rG = rL > rV ? 'L' : rL < rV ? 'V' : 'E';
+  const pG = pL > pV ? 'L' : pL < pV ? 'V' : 'E';
+  const ganador = rG === pG;
+  let total = exacto ? 3 : ganador ? 1 : 0;
+  const golesL = !exacto && pL === rL;
+  const golesV = !exacto && pV === rV;
+  if (golesL) total += 0.5;
+  if (golesV) total += 0.5;
+  return { total, exacto, ganador, golesL, golesV };
+}
 function calcPtsE(partido, pred) {
-  if (!pred || partido.goles_local === null) return { total: 0, exacto: false, ganador: false, penaltiOk: false };
+  if (!pred || partido.goles_local === null) return { total: 0, exacto: false, ganador: false, penaltiOk: false, golesL: false, golesV: false };
   const rL = partido.goles_local, rV = partido.goles_visita;
   const pL = parseInt(pred.goles_local), pV = parseInt(pred.goles_visita);
   const exacto = pL === rL && pV === rV;
@@ -370,8 +385,12 @@ function calcPtsE(partido, pred) {
   const penaltiOk = pred.pred_penaltis === true && partido.penaltis === true &&
     pred.pred_ganador_pen && pred.pred_ganador_pen === partido.ganador_pen;
   let total = exacto ? 3 : ganador ? 1 : 0;
+  const golesL = !exacto && pL === rL;
+  const golesV = !exacto && pV === rV;
+  if (golesL) total += 0.5;
+  if (golesV) total += 0.5;
   if (penaltiOk) total += 1;
-  return { total, exacto, ganador, penaltiOk };
+  return { total, exacto, ganador, penaltiOk, golesL, golesV };
 }
 
 const penMap = {};
