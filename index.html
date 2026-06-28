@@ -238,6 +238,27 @@
   </div>
 </div>
 
+<!-- CAMBIAR PIN -->
+<div id="modal-cambiar-pin" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;align-items:center;justify-content:center;">
+  <div style="background:white;border-radius:12px;padding:24px;width:90%;max-width:320px;box-shadow:0 8px 32px rgba(0,0,0,.2);">
+    <h3 style="margin-bottom:16px;font-size:16px;">🔑 Cambiar mi PIN</h3>
+    <div class="campo"><label>PIN actual</label>
+      <input type="password" id="pin-actual" maxlength="4" inputmode="numeric" placeholder="····" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+    </div>
+    <div class="campo"><label>PIN nuevo</label>
+      <input type="password" id="pin-nuevo" maxlength="4" inputmode="numeric" placeholder="····" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+    </div>
+    <div class="campo"><label>Confirmar PIN nuevo</label>
+      <input type="password" id="pin-confirmar" maxlength="4" inputmode="numeric" placeholder="····" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+    </div>
+    <div id="pin-cambiar-err" style="color:var(--rojo);font-size:12px;min-height:16px;margin-bottom:8px;"></div>
+    <div style="display:flex;gap:8px;margin-top:4px;">
+      <button type="button" class="btn btn-v" style="flex:1" onclick="confirmarCambioPin()">Guardar</button>
+      <button type="button" class="btn btn-g" style="flex:1" onclick="cerrarCambiarPin()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
 <!-- HEADER -->
 <header>
   <div class="header-left">
@@ -246,6 +267,7 @@
   </div>
   <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
     <span class="chip" id="chip-usuario" onclick="cambiarUsuario()">👤 …</span>
+    <span class="chip" id="chip-cambiar-pin" onclick="abrirCambiarPin()" style="display:none;font-size:11px;">🔑 PIN</span>
     <nav class="tabs">
       <button class="tab active" onclick="irA('partidos',this)">Partidos</button>
       <button class="tab" onclick="irA('predicciones',this)">Mis predicciones</button>
@@ -542,7 +564,38 @@ function seleccionarUsuario(id, nombre) {
   usuarioActual = { id, nombre };
   document.getElementById('pantalla-usuario').style.display = 'none';
   document.getElementById('chip-usuario').textContent = '👤 ' + nombre;
+  document.getElementById('chip-cambiar-pin').style.display = 'inline-block';
   renderVista();
+}
+
+function abrirCambiarPin() {
+  document.getElementById('pin-actual').value = '';
+  document.getElementById('pin-nuevo').value = '';
+  document.getElementById('pin-confirmar').value = '';
+  document.getElementById('pin-cambiar-err').textContent = '';
+  document.getElementById('modal-cambiar-pin').style.display = 'flex';
+  setTimeout(() => document.getElementById('pin-actual').focus(), 100);
+}
+
+function cerrarCambiarPin() {
+  document.getElementById('modal-cambiar-pin').style.display = 'none';
+}
+
+async function confirmarCambioPin() {
+  const actual = document.getElementById('pin-actual').value.trim();
+  const nuevo = document.getElementById('pin-nuevo').value.trim();
+  const confirmar = document.getElementById('pin-confirmar').value.trim();
+  const err = document.getElementById('pin-cambiar-err');
+  const participante = cParticipantes.find(p => p.id === usuarioActual.id);
+  if (actual !== participante?.pin) { err.textContent = '❌ PIN actual incorrecto.'; return; }
+  if (!/^\d{4}$/.test(nuevo)) { err.textContent = '❌ El PIN nuevo debe ser 4 dígitos.'; return; }
+  if (nuevo !== confirmar) { err.textContent = '❌ Los PINs nuevos no coinciden.'; return; }
+  try {
+    await sbPatch('participantes', { pin: nuevo }, { id: usuarioActual.id });
+    if (participante) participante.pin = nuevo;
+    cerrarCambiarPin();
+    alert('✅ PIN cambiado exitosamente.');
+  } catch(e) { err.textContent = 'Error: ' + e.message; }
 }
 
 async function sbWrite(operation, tabla, body, eq) {
