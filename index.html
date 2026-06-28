@@ -468,19 +468,6 @@ async function guardarPreds() {
   } catch(e) { alert('Error: ' + e.message); btn.textContent = 'Guardar predicciones'; btn.disabled = false; }
 }
 
-async function sbWrite(operation, tabla, body, eq) {
-  const methods = { insert: 'POST', update: 'PATCH', upsert: 'POST', delete: 'DELETE' };
-  let url = `${SUPABASE_URL}/rest/v1/${tabla}`;
-  if (eq) { const [col, val] = Object.entries(eq)[0]; url += `?${col}=eq.${val}`; }
-  const headers = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' };
-  if (operation === 'upsert') headers['Prefer'] = 'resolution=merge-duplicates,return=minimal';
-  const res = await fetch(url, { method: methods[operation], headers, body: body ? JSON.stringify(body) : undefined });
-  if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.message || `HTTP ${res.status}`); }
-  if (res.status === 204) return null;
-  const text = await res.text();
-  if (!text || !text.trim()) return null;
-  try { return JSON.parse(text); } catch(e) { return null; }
-}
 </script>
 </body>
 </html>
