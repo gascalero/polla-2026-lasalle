@@ -122,6 +122,11 @@
   .pen-toggle input{accent-color:var(--dorado);}
   .pen-toggle span{font-size:12px;font-weight:600;color:var(--gris-texto);}
   .pen-toggle.activo span{color:#7a5900;}
+  .pen-winner-btns{display:flex;gap:6px;margin-top:6px;}
+  .pen-winner-btn{flex:1;padding:5px 8px;border-radius:6px;border:1.5px solid var(--gris-borde);
+    background:white;cursor:pointer;font-size:11px;font-weight:600;font-family:inherit;
+    color:var(--gris-texto);transition:all .15s;text-align:center;}
+  .pen-winner-btn.sel{background:var(--dorado-claro);border-color:var(--dorado);color:#7a5900;}
 
   /* BADGES RESULTADO */
   .br{font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;white-space:nowrap;}
@@ -359,24 +364,92 @@ function calcPtsE(partido, pred) {
   const rL = partido.goles_local, rV = partido.goles_visita;
   const pL = parseInt(pred.goles_local), pV = parseInt(pred.goles_visita);
   const exacto = pL === rL && pV === rV;
+  const rG = rL > rV ? 'L' : rL < rV ? 'V' : 'E';
   const pG = pL > pV ? 'L' : pL < pV ? 'V' : 'E';
-  let ganador;
-  if (partido.penaltis && partido.ganador_pen) {
-    if (pG === 'E') {
-      ganador = true;
-    } else {
-      const penWinner = partido.ganador_pen === partido.local ? 'L' : 'V';
-      ganador = pG === penWinner;
-    }
-  } else {
-    const rG = rL > rV ? 'L' : rL < rV ? 'V' : 'E';
-    ganador = rG === pG;
-  }
-  const penaltiOk = pred.pred_penaltis === true && partido.penaltis === true;
+  const ganador = rG === pG;
+  const penaltiOk = pred.pred_penaltis === true && partido.penaltis === true &&
+    pred.pred_ganador_pen && pred.pred_ganador_pen === partido.ganador_pen;
   let total = exacto ? 3 : ganador ? 1 : 0;
   if (penaltiOk) total += 1;
   return { total, exacto, ganador, penaltiOk };
 }
+
+const penMap = {};
+function togglePen(pid) {
+  const lbl = document.getElementById(`toggle-${pid}`);
+  const cb = lbl?.querySelector('input');
+  if (!cb) return;
+  cb.checked = !cb.checked;
+  lbl.classList.toggle('activo', cb.checked);
+  if (!penMap[pid]) penMap[pid] = {};
+  penMap[pid].penaltis = cb.checked;
+  let winnerDiv = document.getElementById(`pen-winner-${pid}`);
+  if (!winnerDiv && cb.checked) {
+    const partido = cPartidos.find(p => p.id === pid);
+    if (partido) {
+      winnerDiv = document.createElement('div');
+      winnerDiv.className = 'pen-winner-btns';
+      winnerDiv.id = `pen-winner-${pid}`;
+      winnerDiv.innerHTML = `<button type="button" class="pen-winner-btn" onclick="setPenWinner('${pid}','${partido.local}')">${partido.local}</button><button type="button" class="pen-winner-btn" onclick="setPenWinner('${pid}','${partido.visita}')">${partido.visita}</button>`;
+      lbl.insertAdjacentElement('afterend', winnerDiv);
+    }
+  }
+  if (winnerDiv) {
+    winnerDiv.style.display = cb.checked ? 'flex' : 'none';
+    if (!cb.checked) {
+      penMap[pid].ganador = null;
+      winnerDiv.querySelectorAll('.pen-winner-btn').forEach(b => b.classList.remove('sel'));
+    }
+  }
+}
+function setPenWinner(pid, equipo) {
+  if (!penMap[pid]) penMap[pid] = {};
+  penMap[pid].ganador = equipo;
+  const winnerDiv = document.getElementById(`pen-winner-${pid}`);
+  winnerDiv?.querySelectorAll('.pen-winner-btn').forEach(b => {
+    b.classList.toggle('sel', b.textContent.trim() === equipo);
+  });
+}
+
+async function guardarPreds() {
+  if (!usuarioActual) return;
+  const btn = document.getElementById('btn-guardar-pred');
+  btn.textContent = 'Guardando…'; btn.disabled = true;
+  const editables = cPartidos.filter(p => !jugado(p) && !bloqueado(p) && HABILITADOS.includes(p.id));
+  const misIds = new Set(cPredicciones.filter(p => p.participante_id === usuarioActual.id).map(p => p.partido_id));
+  const nuevas = [], existentes = [];
+  editables.forEach(p => {
+    const inL = document.getElementById(`psc-${p.id}-L`);
+    const inV = document.getElementById(`psc-${p.id}-V`);
+    const cb = document.querySelector(`#toggle-${p.id} input`);
+    if (!inL || !inV || inL.value.trim() === '' || inV.value.trim() === '') return;
+    const hasPen = cb?.checked || false;
+    const row = {
+      participante_id: usuarioActual.id,
+      partido_id: p.id,
+      goles_local: parseInt(inL.value),
+      goles_visita: parseInt(inV.value),
+      pred_penaltis: hasPen,
+      pred_ganador_pen: hasPen ? (penMap[p.id]?.ganador || null) : null
+    };
+    if (misIds.has(p.id)) existentes.push(row);
+    else nuevas.push(row);
+  });
+  try {
+    if (nuevas.length) await sbPost('predicciones_elim', nuevas);
+    for (const r of existentes) {
+      await sbPatch('predicciones_elim',
+        { goles_local: r.goles_local, goles_visita: r.goles_visita, pred_penaltis: r.pred_penaltis, pred_ganador_pen: r.pred_ganador_pen },
+        { participante_id: r.participante_id, partido_id: r.partido_id }
+      );
+    }
+    cPredicciones = await sbGet('predicciones_elim') || [];
+    renderMisPreds();
+    btn.textContent = '✓ Guardado'; btn.disabled = false;
+    setTimeout(() => { btn.textContent = 'Guardar predicciones'; }, 2000);
+  } catch(e) { alert('Error: ' + e.message); btn.textContent = 'Guardar predicciones'; btn.disabled = false; }
+}
+
 async function sbWrite(operation, tabla, body, eq) {
   const methods = { insert: 'POST', update: 'PATCH', upsert: 'POST', delete: 'DELETE' };
   let url = `${SUPABASE_URL}/rest/v1/${tabla}`;
