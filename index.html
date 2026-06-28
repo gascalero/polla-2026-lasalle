@@ -393,7 +393,6 @@ function calcPtsE(partido, pred) {
   return { total, exacto, ganador, penaltiOk, golesL, golesV };
 }
 
-const penMap = {};
 function togglePen(pid) {
   const lbl = document.getElementById(`toggle-${pid}`);
   const cb = lbl?.querySelector('input');
