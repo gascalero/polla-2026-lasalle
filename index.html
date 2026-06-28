@@ -468,6 +468,83 @@ async function guardarPreds() {
   } catch(e) { alert('Error: ' + e.message); btn.textContent = 'Guardar predicciones'; btn.disabled = false; }
 }
 
+function renderAdminParticipantes() {
+  const lista = document.getElementById('lista-part');
+  if (!cParticipantes.length) { lista.innerHTML = '<p style="font-size:12px;color:var(--gris-texto)">Sin participantes aún.</p>'; return; }
+  lista.innerHTML = cParticipantes.map(p => `
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px solid var(--gris-borde);flex-wrap:wrap;">
+      <span style="font-size:13px;font-weight:600;flex:1;">👤 ${p.nombre}</span>
+      <input type="number" min="1000" max="9999" maxlength="4" id="pin-${p.id}" value="${p.pin||''}" placeholder="PIN 4 dígitos"
+        style="width:110px;padding:4px 8px;border:1px solid var(--gris-borde);border-radius:6px;font-size:12px;">
+      <button type="button" class="btn btn-v btn-sm" onclick="guardarPin('${p.id}')">Guardar PIN</button>
+      <button type="button" class="btn btn-r btn-sm" onclick="eliminarParticipante('${p.id}')">Eliminar</button>
+    </div>`).join('');
+}
+
+async function guardarPin(id) {
+  const inp = document.getElementById(`pin-${id}`);
+  const pin = inp.value.trim();
+  if (pin.length !== 4 || !/^\d{4}$/.test(pin)) { alert('El PIN debe ser exactamente 4 dígitos.'); return; }
+  try {
+    await sbPatch('participantes', { pin }, { id });
+    const p = cParticipantes.find(x => x.id === id);
+    if (p) p.pin = pin;
+    alert('PIN guardado.');
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+function mostrarSelectorUsuario() {
+  const overlay = document.getElementById('pantalla-usuario');
+  const lista = document.getElementById('u-lista');
+  overlay.style.display = 'flex';
+  if (!cParticipantes.length) {
+    lista.innerHTML = '<p style="font-size:12px;color:var(--gris-texto);padding:10px;">Sin participantes. El admin debe agregarlos.</p>';
+    return;
+  }
+  lista.innerHTML = cParticipantes.map(p => `
+    <button class="u-btn" onclick="pedirPin('${p.id}','${p.nombre.replace(/'/g,"\\'")}')">
+      <span class="u-inicial">${p.nombre[0].toUpperCase()}</span>${p.nombre}
+    </button>`).join('');
+}
+
+function pedirPin(id, nombre) {
+  const lista = document.getElementById('u-lista');
+  lista.innerHTML = `
+    <div style="padding:8px 4px;">
+      <p style="font-size:13px;font-weight:600;margin-bottom:10px;">🔐 Hola, ${nombre}. Ingresa tu PIN:</p>
+      <input type="password" id="pin-input-usr" maxlength="4" inputmode="numeric" placeholder="····"
+        style="width:100%;padding:10px;border:1.5px solid var(--gris-borde);border-radius:8px;font-size:20px;text-align:center;letter-spacing:8px;margin-bottom:8px;"
+        oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+      <div id="pin-usr-err" style="color:var(--rojo);font-size:12px;min-height:16px;margin-bottom:8px;"></div>
+      <div style="display:flex;gap:8px;">
+        <button type="button" class="btn btn-v" style="flex:1" onclick="verificarPin('${id}','${nombre.replace(/'/g,"\\'")}')">Entrar</button>
+        <button type="button" class="btn btn-g" style="flex:1" onclick="mostrarSelectorUsuario()">Volver</button>
+      </div>
+    </div>`;
+  setTimeout(() => document.getElementById('pin-input-usr')?.focus(), 100);
+}
+
+function verificarPin(id, nombre) {
+  const inp = document.getElementById('pin-input-usr');
+  const pin = inp?.value.trim();
+  const participante = cParticipantes.find(p => p.id == id);
+  if (!participante?.pin) { alert('Este usuario no tiene PIN asignado. Pídele al organizador que lo configure.'); return; }
+  if (pin !== participante.pin) {
+    document.getElementById('pin-usr-err').textContent = '❌ PIN incorrecto. Inténtalo de nuevo.';
+    inp.value = '';
+    inp.focus();
+    return;
+  }
+  seleccionarUsuario(id, nombre);
+}
+
+function seleccionarUsuario(id, nombre) {
+  usuarioActual = { id, nombre };
+  document.getElementById('pantalla-usuario').style.display = 'none';
+  document.getElementById('chip-usuario').textContent = '👤 ' + nombre;
+  renderVista();
+}
+
 async function sbWrite(operation, tabla, body, eq) {
   const url_base = window._sbUrl;
   const key = window._sbKey;
