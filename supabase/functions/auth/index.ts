@@ -7,7 +7,7 @@ const ADMIN_PIN    = Deno.env.get('ADMIN_PIN')!
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'content-type',
+  'Access-Control-Allow-Headers': 'content-type, authorization',
 }
 
 const USER_TTL_HOURS  = 24
