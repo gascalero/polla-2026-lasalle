@@ -721,6 +721,29 @@ async function sbWrite(operation, tabla, body, eq) {
   try { return JSON.parse(text); } catch(e) { return null; }
 }
 
+// Auto-sync: cada 2 min si hay partidos en curso
+(function() {
+  var _interval = null;
+  function _tick() {
+    var enVivo = (typeof cPartidos !== 'undefined' ? cPartidos : []).some(function(p) {
+      return p.estado === 'en_curso';
+    });
+    if (enVivo) sincronizarResultados();
+  }
+  function _check() {
+    var enVivo = (typeof cPartidos !== 'undefined' ? cPartidos : []).some(function(p) {
+      return p.estado === 'en_curso';
+    });
+    if (enVivo && !_interval) {
+      _interval = setInterval(_tick, 2 * 60 * 1000);
+    } else if (!enVivo && _interval) {
+      clearInterval(_interval);
+      _interval = null;
+    }
+  }
+  setInterval(_check, 30 * 1000); // revisa cada 30s si debe activar/desactivar
+})();
+
 // Override: verificar admin PIN server-side (reemplaza la versión del código ofuscado)
 function checkPin() {
   const inp = document.getElementById('pin-input');
