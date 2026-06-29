@@ -809,20 +809,28 @@ function renderScrollerHoy() {
   var wrap = document.getElementById('scroller-hoy-wrap');
   var cont = document.getElementById('scroller-hoy');
   if (!wrap || !cont) return;
-  var hoy = new Date().toISOString().slice(0, 10);
+  // Fecha local (no UTC) para Colombia (UTC-5)
+  var ahora = new Date();
+  var hoy = ahora.getFullYear() + '-' +
+    String(ahora.getMonth()+1).padStart(2,'0') + '-' +
+    String(ahora.getDate()).padStart(2,'0');
+
+  function mismaFecha(p) {
+    // Chequear campo fecha primero (DATE: "2026-06-29")
+    if (p.fecha && String(p.fecha).slice(0,10) === hoy) return true;
+    // hora_inicio solo aplica si parece un timestamp (contiene T o -)
+    if (p.hora_inicio) {
+      var s = String(p.hora_inicio);
+      if (s.indexOf('T') > -1 || (s.indexOf('-') > 0 && s.indexOf('-') < 5)) {
+        return s.slice(0,10) === hoy;
+      }
+    }
+    return false;
+  }
+
   var lista = [];
-  if (typeof cPartidos !== 'undefined') {
-    lista = lista.concat(cPartidos.filter(function(p) {
-      return (p.fecha && String(p.fecha).slice(0,10) === hoy) ||
-             (p.hora_inicio && String(p.hora_inicio).slice(0,10) === hoy);
-    }));
-  }
-  if (typeof cPartidosG !== 'undefined') {
-    lista = lista.concat(cPartidosG.filter(function(p) {
-      return (p.fecha && String(p.fecha).slice(0,10) === hoy) ||
-             (p.hora_inicio && String(p.hora_inicio).slice(0,10) === hoy);
-    }));
-  }
+  if (typeof cPartidos !== 'undefined') lista = lista.concat(cPartidos.filter(mismaFecha));
+  if (typeof cPartidosG !== 'undefined') lista = lista.concat(cPartidosG.filter(mismaFecha));
   lista.sort(function(a,b) {
     return String(a.hora_inicio||a.fecha||'').localeCompare(String(b.hora_inicio||b.fecha||''));
   });
