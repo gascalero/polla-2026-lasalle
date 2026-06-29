@@ -10,12 +10,13 @@ const CORS = {
 }
 
 // Qué tabla puede hacer qué operaciones, y si requiere admin
-const TABLE_RULES: Record<string, { ops: string[], adminOnly: boolean }> = {
+const TABLE_RULES: Record<string, { ops: string[], adminOnly: boolean, allowOwnPin?: boolean }> = {
   predicciones_elim: { ops: ['insert', 'update', 'upsert'], adminOnly: false },
   predicciones_g:    { ops: ['insert', 'update', 'upsert'], adminOnly: false },
   partidos_elim:     { ops: ['update'],                     adminOnly: true  },
   partidos_g:        { ops: ['update'],                     adminOnly: true  },
-  participantes:     { ops: ['update'],                     adminOnly: true  },
+  // allowOwnPin: usuario puede actualizar solo su propio PIN
+  participantes:     { ops: ['update'],                     adminOnly: true, allowOwnPin: true },
 }
 
 function err(msg: string, status = 400) {
@@ -63,7 +64,11 @@ Deno.serve(async (req) => {
   }
 
   // ── 3. Validar permisos según tipo de sesión ───────────────────────────────
-  if (rule.adminOnly && !session.is_admin) {
+  const isOwnPinUpdate = rule.allowOwnPin && !session.is_admin &&
+    operation === 'update' && payload && Object.keys(payload).every(k => k === 'pin') &&
+    eq?.id && String(eq.id) === String(session.participante_id)
+
+  if (rule.adminOnly && !session.is_admin && !isOwnPinUpdate) {
     return err('Se requiere sesión de admin', 403)
   }
 
