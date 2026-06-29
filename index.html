@@ -386,6 +386,14 @@
     <div id="hab-alerta"></div>
   </div>
 
+  <!-- Sincronización automática -->
+  <div class="sec">
+    <div class="sec-titulo">🔄 Sincronizar resultados</div>
+    <p style="font-size:12px;color:var(--gris-texto);margin-bottom:10px;">Trae los resultados oficiales desde la API y actualiza la tabla automáticamente.</p>
+    <button type="button" class="btn btn-v" id="btn-sync" onclick="sincronizarResultados()">🔄 Sincronizar ahora</button>
+    <div id="sync-status" style="margin-top:8px;font-size:12px;color:var(--gris-texto);"></div>
+  </div>
+
   <!-- Resultados -->
   <div class="sec">
     <div class="sec-titulo">⚙️ Ingresar resultados</div>
@@ -650,6 +658,37 @@ async function confirmarCambioPin() {
     err.textContent = '✅ PIN cambiado correctamente.';
     setTimeout(cerrarCambiarPin, 1400);
   } catch(e) { err.textContent = 'Error: ' + e.message; }
+}
+
+async function sincronizarResultados() {
+  const btn = document.getElementById('btn-sync');
+  const status = document.getElementById('sync-status');
+  btn.disabled = true;
+  btn.textContent = '⏳ Sincronizando…';
+  status.textContent = '';
+  try {
+    const res = await fetch(`${window._sbUrl}/functions/v1/sync-results`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${window._sbKey}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+    status.style.color = 'var(--verde)';
+    status.textContent = `✅ ${data.updated} partido(s) actualizado(s).${data.skipped?.length ? ` Sin cruzar: ${data.skipped.join(', ')}.` : ''}`;
+    if (data.updated > 0) {
+      cPartidos = await sbGet('partidos_elim') || cPartidos;
+      renderVista();
+    }
+  } catch(e) {
+    status.style.color = 'var(--rojo)';
+    status.textContent = `❌ Error: ${e.message}`;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '🔄 Sincronizar ahora';
+  }
 }
 
 async function sbRpc(fn, params) {
