@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS sessions (
   token        uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  participante_id integer REFERENCES participantes(id) ON DELETE CASCADE,
+  participante_id uuid REFERENCES participantes(id) ON DELETE CASCADE,
   is_admin     boolean NOT NULL DEFAULT false,
   expires_at   timestamptz NOT NULL,
   created_at   timestamptz NOT NULL DEFAULT now()
