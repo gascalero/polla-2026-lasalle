@@ -854,11 +854,11 @@ function renderScrollerHoy() {
         ? '<div style="font-size:9px;color:var(--gris-texto);margin-bottom:2px;">Finalizado</div>'
         : (hora ? '<div style="font-size:9px;color:var(--gris-texto);margin-bottom:2px;">⏰ ' + hora + '</div>' : '');
     var scoreColor = vivo ? 'var(--rojo)' : 'var(--texto)';
-    return '<div style="flex:0 0 auto;scroll-snap-align:start;width:120px;background:' + bg + ';border:' + border + ';border-radius:8px;padding:8px 10px;text-align:center;">' +
+    return '<div style="flex:0 0 auto;scroll-snap-align:start;width:180px;background:' + bg + ';border:' + border + ';border-radius:8px;padding:10px 12px;text-align:center;">' +
       label +
-      '<div style="font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + (p.local||'?') + '</div>' +
-      '<div style="font-size:' + (tieneScore?'15':'12') + 'px;font-weight:700;margin:3px 0;color:' + scoreColor + ';">' + score + '</div>' +
-      '<div style="font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + (p.visita||'?') + '</div>' +
+      '<div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + (p.local||'?') + '</div>' +
+      '<div style="font-size:' + (tieneScore?'18':'13') + 'px;font-weight:700;margin:4px 0;color:' + scoreColor + ';">' + score + '</div>' +
+      '<div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + (p.visita||'?') + '</div>' +
       '</div>';
   }).join('');
 }
