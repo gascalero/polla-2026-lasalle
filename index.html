@@ -625,7 +625,7 @@ async function verificarPin(id, nombre) {
   try {
     const res = await fetch(`${window._sbUrl}/functions/v1/auth`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${window._sbKey}` },
       body: JSON.stringify({ participante_id: id, pin })
     });
     const data = await res.json();
@@ -736,7 +736,7 @@ async function sbWrite(operation, tabla, body, eq) {
   if (!session_token) throw new Error('Sesión no iniciada. Recarga e inicia sesión.');
   const res = await fetch(`${window._sbUrl}/functions/v1/write-proxy`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${window._sbKey}` },
     body: JSON.stringify({ operation, tabla, body, eq, session_token })
   });
   if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || e.message || `HTTP ${res.status}`); }
@@ -932,7 +932,7 @@ function checkPin() {
   inp.disabled = true;
   fetch(`${window._sbUrl}/functions/v1/auth`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${window._sbKey}` },
     body: JSON.stringify({ admin_pin: val })
   }).then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
   .then(function(res) {
