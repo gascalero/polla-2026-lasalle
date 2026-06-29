@@ -351,7 +351,7 @@
       <div style="display:flex;align-items:center;gap:10px;font-size:13px;"><span style="font-size:18px;">🥇</span><span><b>3 puntos</b> — Marcador exacto en tiempo regular/extra</span></div>
       <div style="display:flex;align-items:center;gap:10px;font-size:13px;"><span style="font-size:18px;">✅</span><span><b>1 punto</b> — Acertaste el ganador o el empate en tiempo regular/extra</span></div>
       <div style="display:flex;align-items:center;gap:10px;font-size:13px;"><span style="font-size:18px;">⚽</span><span><b>+0.5 puntos</b> — Por cada equipo cuyos goles acertaste (solo si no hay exacto)</span></div>
-      <div style="display:flex;align-items:center;gap:10px;font-size:13px;"><span style="font-size:18px;">🥅</span><span><b>+1 punto bonus</b> — Predijiste que iba a penaltis <u>y</u> acertaste el equipo ganador de la tanda</span></div>
+      <div style="display:flex;align-items:center;gap:10px;font-size:13px;"><span style="font-size:18px;">🥅</span><span><b>+2 puntos bonus</b> — Predijiste que iba a penaltis <u>y</u> acertaste el equipo ganador de la tanda</span></div>
       <div style="display:flex;align-items:center;gap:10px;font-size:13px;"><span style="font-size:18px;">❌</span><span><b>-1 punto</b> — Predijiste penaltis pero el partido se resolvió en tiempo reglamentario o extra</span></div>
     </div>
     <div style="background:var(--dorado-claro);border:1px solid var(--dorado);border-radius:8px;padding:12px;margin-bottom:16px;">
@@ -360,7 +360,7 @@
       <p style="font-size:12px;color:#7a5900;margin:2px 0;">Predijiste <b>3-1</b>, resultado <b>2-1</b> → 1 + 0.5 = 1.5 pts</p>
       <p style="font-size:12px;color:#7a5900;margin:2px 0;">Predijiste <b>2-0</b>, resultado <b>2-1</b> → 1 + 0.5 = 1.5 pts</p>
       <p style="font-size:12px;color:#7a5900;margin:2px 0;">Predijiste <b>0-1</b>, resultado <b>2-1</b> → 0 + 0.5 = 0.5 pts</p>
-      <p style="font-size:12px;color:#7a5900;margin:2px 0;">Predijiste <b>2-1 + penaltis + Local</b>, termina 1-1, Local gana penaltis → 0 + 0.5 + 1 = 1.5 pts</p>
+      <p style="font-size:12px;color:#7a5900;margin:2px 0;">Predijiste <b>2-1 + penaltis + Local</b>, termina 1-1, Local gana penaltis → 0 + 0.5 + 2 = 2.5 pts</p>
       <p style="font-size:12px;color:#7a5900;margin:2px 0;">Predijiste <b>1-0 + penaltis</b>, termina <b>2-1</b> sin penaltis → 1 - 1 = 0 pts</p>
       <p style="font-size:12px;color:#7a5900;margin:2px 0;">Predijiste <b>0-0 + penaltis</b>, termina <b>2-1</b> sin penaltis → 0 - 1 = -1 pt</p>
     </div>
@@ -467,7 +467,7 @@ function calcPtsE(partido, pred) {
   const golesV = !exacto && pV === rV;
   if (golesL) total += 0.5;
   if (golesV) total += 0.5;
-  if (penaltiOk) total += 1;
+  if (penaltiOk) total += 2;
   if (penaltiMiss) total -= 1;
   return { total, exacto, ganador, penaltiOk, penaltiMiss, golesL, golesV };
 }
