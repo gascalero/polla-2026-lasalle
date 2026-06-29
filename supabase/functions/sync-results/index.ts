@@ -102,6 +102,28 @@ Deno.serve(async (req) => {
   }
 
   try {
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+
+    // 0. Cooldown server-side: solo llamar a la API si pasaron ≥30s desde el último sync
+    const COOLDOWN_S = 30
+    const { data: cfg } = await supabase
+      .from('configuracion')
+      .select('valor')
+      .eq('clave', 'last_api_sync')
+      .single()
+
+    if (cfg?.valor) {
+      const secsSince = (Date.now() - new Date(cfg.valor).getTime()) / 1000
+      if (secsSince < COOLDOWN_S) {
+        return new Response(JSON.stringify({ updated: 0, message: `Cooldown — próximo sync en ${Math.ceil(COOLDOWN_S - secsSince)}s` }), {
+          headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+        })
+      }
+    }
+
+    // Registrar timestamp ANTES de la llamada (evita race conditions)
+    await supabase.from('configuracion').upsert({ clave: 'last_api_sync', valor: new Date().toISOString() })
+
     // 1. Traer partidos de eliminatorias de football-data.org
     const apiRes = await fetch('https://api.football-data.org/v4/competitions/WC/matches', {
       headers: { 'X-Auth-Token': FOOTBALL_API_KEY }
@@ -127,7 +149,6 @@ Deno.serve(async (req) => {
     }
 
     // 2. Leer partidos de la DB
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
     const { data: partidos, error: dbErr } = await supabase.from('partidos_elim').select('*')
     if (dbErr) throw new Error(dbErr.message)
 

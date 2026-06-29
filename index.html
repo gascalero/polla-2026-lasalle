@@ -929,7 +929,7 @@ function renderScrollerHoy() {
       return p.estado === 'en_curso';
     });
     if (enVivo && !_interval) {
-      _interval = setInterval(_tick, 2 * 60 * 1000);
+      _interval = setInterval(_tick, 30 * 1000);
     } else if (!enVivo && _interval) {
       clearInterval(_interval);
       _interval = null;
