@@ -264,7 +264,7 @@
 <!-- HEADER -->
 <header>
   <div class="header-left">
-    <h1>⚽ POLLA MUNDIAL 2026 2.0 - 'CAMILO MK'<br><small style='font-size:11px;font-weight:400;'>Patrocinado por: GOARBIT</small></h1>
+    <h1>⚽ POLLA MUNDIAL 2026 2.0 - 'CAMILO MK'<br><medium style='font-size:11px;font-weight:400;'>Patrocinado por: CASILIMA RISK CONSULTING - "Si yo te digo algo, haz lo contrario"</medium></h1>
     <small id="conn-status">Conectando…</small>
   </div>
   <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
@@ -723,19 +723,15 @@ async function sbRpc(fn, params) {
 }
 
 async function sbWrite(operation, tabla, body, eq) {
-  const url_base = window._sbUrl;
-  const key = window._sbKey;
-  const methods = { insert: 'POST', update: 'PATCH', upsert: 'POST', delete: 'DELETE' };
-  let url = `${url_base}/rest/v1/${tabla}`;
-  if (eq) {
-    const entries = Object.entries(eq);
-    url += '?' + entries.map(([c,v]) => `${c}=eq.${v}`).join('&');
-  }
-  const headers = { 'apikey': key, 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' };
-  if (operation === 'upsert') headers['Prefer'] = 'resolution=merge-duplicates,return=minimal';
-  const res = await fetch(url, { method: methods[operation], headers, body: body ? JSON.stringify(body) : undefined });
-  if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.message || `HTTP ${res.status}`); }
-  if (res.status === 204) return null;
+  const headers = { 'Content-Type': 'application/json' };
+  const adminPin = sessionStorage.getItem('admin_pin');
+  if (adminPin) headers['x-admin-pin'] = adminPin;
+  const res = await fetch(`${window._sbUrl}/functions/v1/write-proxy`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ operation, tabla, body, eq, write_token: WRITE_TOKEN })
+  });
+  if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || e.message || `HTTP ${res.status}`); }
   const text = await res.text();
   if (!text || !text.trim()) return null;
   try { return JSON.parse(text); } catch(e) { return null; }
@@ -930,6 +926,7 @@ function checkPin() {
     inp.disabled = false;
     if (ok) {
       sessionStorage.setItem('admin_ok', '1');
+      sessionStorage.setItem('admin_pin', val);
       cerrarPin();
       irA('admin', null);
     } else {
