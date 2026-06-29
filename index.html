@@ -521,23 +521,35 @@ function renderAdminParticipantes() {
   lista.innerHTML = cParticipantes.map(p => `
     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px solid var(--gris-borde);flex-wrap:wrap;">
       <span style="font-size:13px;font-weight:600;flex:1;">👤 ${p.nombre}</span>
-      <input type="number" min="1000" max="9999" maxlength="4" id="pin-${p.id}" value="${p.pin||''}" placeholder="PIN 4 dígitos"
-        style="width:110px;padding:4px 8px;border:1px solid var(--gris-borde);border-radius:6px;font-size:12px;">
-      <button type="button" class="btn btn-v btn-sm" onclick="guardarPin('${p.id}')">Guardar PIN</button>
+      <input type="password" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" id="pin-${p.id}" value="${p.pin||''}" placeholder="····"
+        oninput="this.value=this.value.replace(/[^0-9]/g,'')"
+        style="width:80px;padding:4px 8px;border:1px solid var(--gris-borde);border-radius:6px;font-size:14px;letter-spacing:4px;text-align:center;">
+      <button type="button" class="btn btn-v btn-sm" id="btn-pin-${p.id}" onclick="guardarPin('${p.id}')">Guardar</button>
       <button type="button" class="btn btn-r btn-sm" onclick="eliminarParticipante('${p.id}')">Eliminar</button>
     </div>`).join('');
 }
 
 async function guardarPin(id) {
   const inp = document.getElementById(`pin-${id}`);
+  const btn = document.getElementById(`btn-pin-${id}`);
   const pin = inp.value.trim();
-  if (pin.length !== 4 || !/^\d{4}$/.test(pin)) { alert('El PIN debe ser exactamente 4 dígitos.'); return; }
+  if (pin.length !== 4 || !/^\d{4}$/.test(pin)) {
+    inp.style.borderColor = 'var(--rojo)';
+    setTimeout(() => { inp.style.borderColor = ''; }, 2000);
+    return;
+  }
+  const orig = btn.textContent;
+  btn.textContent = '…'; btn.disabled = true;
   try {
     await sbPatch('participantes', { pin }, { id });
     const p = cParticipantes.find(x => x.id === id);
     if (p) p.pin = pin;
-    alert('PIN guardado.');
-  } catch(e) { alert('Error: ' + e.message); }
+    btn.textContent = '✓'; btn.style.background = 'var(--verde-mid)';
+    setTimeout(() => { btn.textContent = orig; btn.style.background = ''; btn.disabled = false; }, 2000);
+  } catch(e) {
+    btn.textContent = '✗'; btn.style.background = 'var(--rojo)';
+    setTimeout(() => { btn.textContent = orig; btn.style.background = ''; btn.disabled = false; }, 2500);
+  }
 }
 
 function mostrarSelectorUsuario() {
@@ -618,8 +630,9 @@ async function confirmarCambioPin() {
   try {
     await sbPatch('participantes', { pin: nuevo }, { id: usuarioActual.id });
     if (participante) participante.pin = nuevo;
-    cerrarCambiarPin();
-    alert('✅ PIN cambiado exitosamente.');
+    err.style.color = 'var(--verde)';
+    err.textContent = '✅ PIN cambiado correctamente.';
+    setTimeout(cerrarCambiarPin, 1400);
   } catch(e) { err.textContent = 'Error: ' + e.message; }
 }
 
@@ -641,6 +654,22 @@ async function sbWrite(operation, tabla, body, eq) {
   if (!text || !text.trim()) return null;
   try { return JSON.parse(text); } catch(e) { return null; }
 }
+
+document.addEventListener('input', function(e) {
+  if (!e.target.classList.contains('pred-sc')) return;
+  const m = e.target.id?.match(/^psc-(.+)-(L|V)$/);
+  if (!m) return;
+  const pid = m[1];
+  const inL = document.getElementById(`psc-${pid}-L`);
+  const inV = document.getElementById(`psc-${pid}-V`);
+  if (!inL || !inV) return;
+  const isDraw = inL.value !== '' && inV.value !== '' && inL.value === inV.value;
+  const toggle = document.getElementById(`toggle-${pid}`);
+  if (toggle) {
+    toggle.style.outline = isDraw ? '2px solid var(--dorado)' : '';
+    toggle.title = isDraw ? 'Empate — ¿va a penaltis?' : '';
+  }
+});
 </script>
 </body>
 </html>
