@@ -185,8 +185,13 @@ Deno.serve(async (req) => {
         updated_at: new Date().toISOString(),
       }
 
+      // Si el partido tiene sync bloqueado, saltar completamente
+      if (partido.sync_bloqueado) {
+        skipped.push(`${apiHome} vs ${apiAway} (sync bloqueado)`)
+        continue
+      }
+
       // Solo actualizar el marcador si la API devuelve valores no-nulos
-      // Evita sobreescribir un score válido con null durante lapsos de la API
       if (homeScore !== null && awayScore !== null) {
         updateData.goles_local  = swapped ? awayScore : homeScore
         updateData.goles_visita = swapped ? homeScore : awayScore

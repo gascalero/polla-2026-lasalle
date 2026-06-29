@@ -430,6 +430,13 @@
     <div id="admin-partidos"><div class="loading"><div class="spinner"></div></div></div>
   </div>
 
+  <!-- Bloqueo de sync por partido -->
+  <div class="sec">
+    <div class="sec-titulo">🔒 Bloqueo de sync</div>
+    <p style="font-size:12px;color:var(--gris-texto);margin-bottom:12px;">Bloquea partidos específicos para que el sync automático no pise el marcador ingresado manualmente. Úsalo cuando la API devuelva datos incorrectos.</p>
+    <div id="admin-sync-bloqueo"><div class="loading"><div class="spinner"></div></div></div>
+  </div>
+
   <!-- Deducción por penaltis -->
   <div class="sec">
     <div class="sec-titulo">⚠️ Deducción por penaltis</div>
@@ -1060,6 +1067,55 @@ async function cargarAuditLog() {
   }
 }
 
+async function renderAdminSyncBloqueo() {
+  const cont = document.getElementById('admin-sync-bloqueo');
+  if (!cont) return;
+  try {
+    const res = await fetch(`${window._sbUrl}/rest/v1/partidos_elim?select=id,local,visita,estado,sync_bloqueado&order=id.asc`, {
+      headers: { 'apikey': window._sbKey, 'Authorization': `Bearer ${window._sbKey}` }
+    });
+    const partidos = await res.json();
+    if (!Array.isArray(partidos) || !partidos.length) {
+      cont.innerHTML = '<p style="font-size:12px;color:var(--gris-texto);">No hay partidos cargados.</p>';
+      return;
+    }
+    cont.innerHTML = partidos.map(function(p) {
+      const bloqueado = p.sync_bloqueado === true;
+      const estadoLabel = p.estado === 'finalizado' || p.estado === 'FINISHED' ? '✅' : p.estado === 'en_curso' ? '🔴' : '🕐';
+      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--gris-borde);">
+        <div>
+          <span style="font-size:13px;font-weight:600;">${estadoLabel} ${p.local} vs ${p.visita}</span>
+        </div>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+          <span style="font-size:11px;color:${bloqueado ? 'var(--rojo,#e53935)' : 'var(--gris-texto)'};">${bloqueado ? '🔒 Bloqueado' : 'Libre'}</span>
+          <input type="checkbox" ${bloqueado ? 'checked' : ''} onchange="toggleSyncBloqueo('${p.id}', this)" style="width:16px;height:16px;cursor:pointer;">
+        </label>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    cont.innerHTML = `<p style="font-size:12px;color:var(--rojo,#e53935);">Error: ${e.message}</p>`;
+  }
+}
+
+async function toggleSyncBloqueo(pid, cb) {
+  const bloqueado = cb.checked;
+  const label = cb.previousElementSibling;
+  cb.disabled = true;
+  try {
+    await sbWrite('update', 'partidos_elim', { sync_bloqueado: bloqueado }, { id: pid });
+    if (label) {
+      label.textContent = bloqueado ? '🔒 Bloqueado' : 'Libre';
+      label.style.color = bloqueado ? 'var(--rojo,#e53935)' : 'var(--gris-texto)';
+    }
+    mostrarToast(bloqueado ? '🔒 Sync bloqueado para este partido' : '🔓 Sync habilitado', 'ok');
+  } catch(e) {
+    mostrarToast('Error: ' + e.message, 'error');
+    cb.checked = !bloqueado;
+  } finally {
+    cb.disabled = false;
+  }
+}
+
 async function renderAdminPenaltiMiss() {
   const cont = document.getElementById('admin-penalti-miss');
   if (!cont) return;
@@ -1116,6 +1172,7 @@ document.addEventListener('click', function(e) {
       if (document.getElementById('vista-admin')?.classList.contains('activa') &&
           sessionStorage.getItem('admin_ok') === '1') {
         renderAdminPenaltiMiss();
+        renderAdminSyncBloqueo();
       }
     }, 200);
   }
