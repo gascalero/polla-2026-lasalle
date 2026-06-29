@@ -862,15 +862,16 @@ function renderScrollerHoy() {
     return false;
   }
 
-  var lista = [];
-  if (typeof cPartidos !== 'undefined') lista = lista.concat(cPartidos.filter(mismaFecha));
-  if (typeof cPartidosG !== 'undefined') lista = lista.concat(cPartidosG.filter(mismaFecha));
-  lista.sort(function(a,b) {
-    return String(a.hora_inicio||a.fecha||'').localeCompare(String(b.hora_inicio||b.fecha||''));
+  var listaE = typeof cPartidos  !== 'undefined' ? cPartidos.filter(mismaFecha).map(function(p){ return {p:p, tipo:'E'}; }) : [];
+  var listaG = typeof cPartidosG !== 'undefined' ? cPartidosG.filter(mismaFecha).map(function(p){ return {p:p, tipo:'G'}; }) : [];
+  var lista  = listaE.concat(listaG).sort(function(a,b){
+    return String(a.p.hora_inicio||a.p.fecha||'').localeCompare(String(b.p.hora_inicio||b.p.fecha||''));
   });
   if (!lista.length) { wrap.style.display = 'none'; return; }
   wrap.style.display = 'block';
-  cont.innerHTML = lista.map(function(p) {
+  cont.innerHTML = lista.map(function(item) {
+    var p    = item.p;
+    var tipo = item.tipo;
     var est  = p.estado;
     var vivo = est === 'en_curso' || est === 'IN_PLAY' || est === 'PAUSED';
     var fin  = est === 'finalizado' || est === 'FINISHED';
@@ -893,13 +894,36 @@ function renderScrollerHoy() {
         ? '<div style="font-size:9px;color:var(--gris-texto);margin-bottom:2px;">Finalizado</div>'
         : (hora ? '<div style="font-size:9px;color:var(--gris-texto);margin-bottom:2px;">⏰ ' + hora + '</div>' : '');
     var scoreColor = vivo ? 'var(--rojo)' : 'var(--texto)';
+    var btnPreds = '<button onclick="abrirPredsDesdeScroller(\'' + p.id + '\',\'' + tipo + '\')" style="margin-top:7px;width:100%;padding:3px 0;font-size:10px;font-weight:600;color:var(--verde);background:var(--verde-claro);border:none;border-radius:5px;cursor:pointer;">👁 Ver predicciones</button>';
     return '<div style="flex:0 0 auto;scroll-snap-align:start;width:180px;background:' + bg + ';border:' + border + ';border-radius:8px;padding:10px 12px;text-align:center;">' +
       label +
       '<div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + (p.local||'?') + '</div>' +
       '<div style="font-size:' + (tieneScore?'18':'13') + 'px;font-weight:700;margin:4px 0;color:' + scoreColor + ';">' + score + '</div>' +
       '<div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + (p.visita||'?') + '</div>' +
+      btnPreds +
       '</div>';
   }).join('');
+}
+
+function abrirPredsDesdeScroller(id, tipo) {
+  // 1. Ir a la tab de Partidos
+  var tabPartidos = document.querySelector('.tab[onclick*="partidos"]');
+  if (tabPartidos) tabPartidos.click();
+  // 2. Esperar a que renderice y abrir el panel
+  setTimeout(function() {
+    var panelId = 'panel-' + tipo + '-' + id;
+    var panel = document.getElementById(panelId);
+    if (panel) {
+      // Abrir el panel si no está abierto
+      if (!panel.classList.contains('open')) {
+        togglePredPanel(panelId, tipo, id);
+      }
+      // Scroll al partido
+      var card = panel.closest('[id^="card-"], .partido-card') || panel.parentElement;
+      if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      else panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, 350);
 }
 
 (function() {
