@@ -155,8 +155,8 @@ Deno.serve(async (req) => {
       }
 
       const swapped = partido.local === apiAway
-      const homeScore = match.score?.fullTime?.home ?? null
-      const awayScore = match.score?.fullTime?.away ?? null
+      const homeScore = match.score?.extraTime?.home ?? match.score?.fullTime?.home ?? null
+      const awayScore = match.score?.extraTime?.away ?? match.score?.fullTime?.away ?? null
 
       const updateData: Record<string, any> = {
         goles_local: swapped ? awayScore : homeScore,
@@ -165,16 +165,12 @@ Deno.serve(async (req) => {
         updated_at: new Date().toISOString(),
       }
 
-      // Penaltis: cuando el partido terminó en empate con desempate por penaltis
-      if (status === 'FINISHED' && match.score?.winner === 'DRAW' &&
-          match.score?.penalties?.home != null) {
+      if (status === 'FINISHED' && match.score?.penalties?.home != null) {
         const penHome = match.score.penalties.home
         const penAway = match.score.penalties.away
         const penWinnerApi = penHome > penAway ? match.homeTeam.name : match.awayTeam.name
-        const penWinnerEs = TEAM_MAP[penWinnerApi] || penWinnerApi
-
         updateData.penaltis = true
-        updateData.ganador_pen = penWinnerEs
+        updateData.ganador_pen = TEAM_MAP[penWinnerApi] || penWinnerApi
       }
 
       const { error } = await supabase
