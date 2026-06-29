@@ -74,17 +74,16 @@ Deno.serve(async (req) => {
 
   // ── 4. Para predicciones: verificar ownership ──────────────────────────────
   if (!rule.adminOnly) {
+    // participante_id puede estar en body (INSERT) o en eq (UPDATE)
     const rows = Array.isArray(payload) ? payload : [payload]
-    const ids  = [...new Set(rows.map((r: any) => r?.participante_id).filter(Boolean))]
+    const idsInBody = rows.map((r: any) => r?.participante_id).filter(Boolean)
+    const idInEq    = eq?.participante_id
 
-    // Solo se puede escribir para el propio participante_id de la sesión
-    if (!ids.length || ids.some(id => String(id) !== String(session.participante_id))) {
+    const allIds = [...new Set([...idsInBody, ...(idInEq ? [idInEq] : [])])]
+
+    if (!allIds.length) return err('participante_id requerido', 400)
+    if (allIds.some(id => String(id) !== String(session.participante_id))) {
       return err('No puedes escribir predicciones de otro participante', 403)
-    }
-
-    // Para updates con eq: verificar que el eq.participante_id coincide
-    if (eq?.participante_id && String(eq.participante_id) !== String(session.participante_id)) {
-      return err('No puedes modificar predicciones de otro participante', 403)
     }
   }
 
