@@ -181,10 +181,15 @@ Deno.serve(async (req) => {
       const awayScore = match.score?.extraTime?.away ?? match.score?.fullTime?.away ?? null
 
       const updateData: Record<string, any> = {
-        goles_local: swapped ? awayScore : homeScore,
-        goles_visita: swapped ? homeScore : awayScore,
         estado: STATUS_MAP[status] || 'pendiente',
         updated_at: new Date().toISOString(),
+      }
+
+      // Solo actualizar el marcador si la API devuelve valores no-nulos
+      // Evita sobreescribir un score válido con null durante lapsos de la API
+      if (homeScore !== null && awayScore !== null) {
+        updateData.goles_local  = swapped ? awayScore : homeScore
+        updateData.goles_visita = swapped ? homeScore : awayScore
       }
 
       if (status === 'FINISHED' && match.score?.penalties?.home != null) {
