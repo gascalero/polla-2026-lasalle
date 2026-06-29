@@ -41,6 +41,7 @@
     position:sticky;top:57px;z-index:99;
   }
   .modo-bar span{font-size:11px;font-weight:600;color:var(--gris-texto);text-transform:uppercase;letter-spacing:.4px;}
+  #scroller-hoy::-webkit-scrollbar{display:none;}
   .modo-btn{padding:5px 14px;border-radius:20px;border:1.5px solid var(--gris-borde);
     background:white;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;
     color:var(--gris-texto);transition:all .15s;}
@@ -283,6 +284,12 @@
   <span>Ver:</span>
   <button class="modo-btn" id="modo-grupos" onclick="setModo('grupos')">Fase de Grupos</button>
   <button class="modo-btn active" id="modo-elim" onclick="setModo('elim')">Eliminatorias</button>
+</div>
+
+<!-- ── SCROLLER HOY ── -->
+<div id="scroller-hoy-wrap" style="display:none;background:var(--blanco);border-bottom:1px solid var(--gris-borde);">
+  <div style="font-size:10px;font-weight:700;color:var(--gris-texto);text-transform:uppercase;letter-spacing:.5px;padding:8px 16px 0;">HOY</div>
+  <div id="scroller-hoy" style="display:flex;overflow-x:auto;gap:8px;padding:8px 16px 10px;-webkit-overflow-scrolling:touch;scrollbar-width:none;scroll-snap-type:x mandatory;"></div>
 </div>
 
 <!-- ── VISTA PARTIDOS ── -->
@@ -663,9 +670,8 @@ async function confirmarCambioPin() {
 async function sincronizarResultados() {
   const btn = document.getElementById('btn-sync');
   const status = document.getElementById('sync-status');
-  btn.disabled = true;
-  btn.textContent = '⏳ Sincronizando…';
-  status.textContent = '';
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Sincronizando…'; }
+  if (status) status.textContent = '';
   try {
     const res = await fetch(`${window._sbUrl}/functions/v1/sync-results`, {
       method: 'POST',
@@ -676,18 +682,18 @@ async function sincronizarResultados() {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
-    status.style.color = 'var(--verde)';
-    status.textContent = `✅ ${data.updated} partido(s) actualizado(s).${data.skipped?.length ? ` Sin cruzar: ${data.skipped.join(', ')}.` : ''}`;
+    if (status) { status.style.color = 'var(--verde)'; status.textContent = `✅ ${data.updated} partido(s) actualizado(s).${data.skipped?.length ? ` Sin cruzar: ${data.skipped.join(', ')}.` : ''}`; }
     if (data.updated > 0) {
+      mostrarToast(`🔔 ${data.updated} resultado(s) actualizado(s)`, 'ok');
       cPartidos = await sbGet('partidos_elim') || cPartidos;
       renderVista();
+      actualizarEnVivo();
+      renderScrollerHoy();
     }
   } catch(e) {
-    status.style.color = 'var(--rojo)';
-    status.textContent = `❌ Error: ${e.message}`;
+    if (status) { status.style.color = 'var(--rojo)'; status.textContent = `❌ Error: ${e.message}`; }
   } finally {
-    btn.disabled = false;
-    btn.textContent = '🔄 Sincronizar ahora';
+    if (btn) { btn.disabled = false; btn.textContent = '🔄 Sincronizar ahora'; }
   }
 }
 
@@ -720,6 +726,147 @@ async function sbWrite(operation, tabla, body, eq) {
   if (!text || !text.trim()) return null;
   try { return JSON.parse(text); } catch(e) { return null; }
 }
+
+// === MEJORAS: EN VIVO + TOAST + CUENTA REGRESIVA ===
+
+(function() {
+  var s = document.createElement('style');
+  s.textContent = '@keyframes pulsar{0%,100%{opacity:1}50%{opacity:.6}}';
+  document.head.appendChild(s);
+})();
+
+function mostrarToast(msg, tipo) {
+  var t = document.getElementById('_toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = '_toast';
+    t.style.cssText = 'position:fixed;top:68px;left:50%;transform:translateX(-50%);padding:9px 18px;border-radius:8px;font-size:13px;font-weight:600;z-index:1001;opacity:0;transition:opacity .3s;pointer-events:none;max-width:90vw;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.2);';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.background = tipo === 'ok' ? '#006845' : '#c0392b';
+  t.style.color = 'white';
+  t.style.opacity = '1';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(function() { t.style.opacity = '0'; }, 4000);
+}
+
+function actualizarEnVivo() {
+  if (typeof cPartidos === 'undefined') return;
+  var vivos = cPartidos.filter(function(p) { return p.estado === 'en_curso'; });
+  var el = document.getElementById('_envivo');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = '_envivo';
+    el.style.cssText = 'position:fixed;bottom:20px;right:16px;background:#c0392b;color:white;padding:8px 14px;border-radius:20px;font-size:12px;font-weight:700;z-index:999;box-shadow:0 2px 8px rgba(0,0,0,.3);cursor:pointer;display:none;animation:pulsar 1.5s infinite;';
+    el.onclick = function() { var tab = document.querySelector('.tab'); if (tab) tab.click(); };
+    document.body.appendChild(el);
+  }
+  if (vivos.length === 1) {
+    el.innerHTML = '🔴 EN VIVO: ' + vivos[0].local + ' vs ' + vivos[0].visita;
+    el.style.display = 'block';
+  } else if (vivos.length > 1) {
+    el.innerHTML = '🔴 ' + vivos.length + ' partidos en vivo';
+    el.style.display = 'block';
+  } else {
+    el.style.display = 'none';
+  }
+}
+
+function actualizarCuentaRegresiva() {
+  if (typeof cPartidos === 'undefined') return;
+  var ahora = Date.now();
+  var proximos = cPartidos
+    .filter(function(p) { return p.estado === 'pendiente' && p.hora_inicio; })
+    .map(function(p) { return { p: p, ms: new Date(p.hora_inicio).getTime() - ahora }; })
+    .filter(function(x) { return x.ms > 0 && x.ms < 7200000; })
+    .sort(function(a, b) { return a.ms - b.ms; });
+  var el = document.getElementById('_countdown');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = '_countdown';
+    el.style.cssText = 'display:none;text-align:center;background:#fff8e1;border-bottom:1px solid #C9A84C;padding:7px 18px;font-size:12px;font-weight:600;color:#7a5900;position:sticky;top:94px;z-index:97;';
+    var ref = document.querySelector('.modo-bar');
+    if (ref) ref.insertAdjacentElement('afterend', el);
+  }
+  if (proximos.length > 0) {
+    var x = proximos[0];
+    var h = Math.floor(x.ms / 3600000);
+    var m = Math.floor((x.ms % 3600000) / 60000);
+    var s = Math.floor((x.ms % 60000) / 1000);
+    var tiempo = h > 0 ? h + 'h ' + m + 'min' : m + 'min ' + String(s).padStart(2, '0') + 's';
+    el.textContent = '⏱ ' + x.p.local + ' vs ' + x.p.visita + ' — cierra en ' + tiempo;
+    el.style.display = 'block';
+  } else {
+    el.style.display = 'none';
+  }
+}
+
+setInterval(function() { actualizarEnVivo(); actualizarCuentaRegresiva(); }, 1000);
+
+// === SCROLLER PARTIDOS DE HOY ===
+function renderScrollerHoy() {
+  var wrap = document.getElementById('scroller-hoy-wrap');
+  var cont = document.getElementById('scroller-hoy');
+  if (!wrap || !cont) return;
+  var hoy = new Date().toISOString().slice(0, 10);
+  var lista = [];
+  if (typeof cPartidos !== 'undefined') {
+    lista = lista.concat(cPartidos.filter(function(p) {
+      return (p.fecha && String(p.fecha).slice(0,10) === hoy) ||
+             (p.hora_inicio && String(p.hora_inicio).slice(0,10) === hoy);
+    }));
+  }
+  if (typeof cPartidosG !== 'undefined') {
+    lista = lista.concat(cPartidosG.filter(function(p) {
+      return (p.fecha && String(p.fecha).slice(0,10) === hoy) ||
+             (p.hora_inicio && String(p.hora_inicio).slice(0,10) === hoy);
+    }));
+  }
+  lista.sort(function(a,b) {
+    return String(a.hora_inicio||a.fecha||'').localeCompare(String(b.hora_inicio||b.fecha||''));
+  });
+  if (!lista.length) { wrap.style.display = 'none'; return; }
+  wrap.style.display = 'block';
+  cont.innerHTML = lista.map(function(p) {
+    var vivo = p.estado === 'en_curso';
+    var fin  = p.estado === 'finalizado';
+    var hora = '';
+    if (p.hora_inicio) {
+      var d = new Date(p.hora_inicio);
+      if (!isNaN(d)) hora = d.toLocaleTimeString('es-CO', {hour:'2-digit', minute:'2-digit'});
+    }
+    var tieneScore = p.goles_local != null && p.goles_visita != null;
+    var score = tieneScore ? p.goles_local + ' – ' + p.goles_visita + (p.penaltis ? '<sup style="font-size:8px"> pen</sup>' : '') : 'vs';
+    var border = vivo ? '2px solid var(--rojo)' : '1.5px solid var(--gris-borde)';
+    var bg     = vivo ? '#fff5f5' : 'var(--blanco)';
+    var label  = vivo
+      ? '<div style="font-size:9px;font-weight:700;color:var(--rojo);margin-bottom:2px;">🔴 EN VIVO</div>'
+      : fin
+        ? '<div style="font-size:9px;color:var(--gris-texto);margin-bottom:2px;">Finalizado</div>'
+        : (hora ? '<div style="font-size:9px;color:var(--gris-texto);margin-bottom:2px;">⏰ ' + hora + '</div>' : '');
+    var scoreColor = vivo ? 'var(--rojo)' : 'var(--texto)';
+    return '<div style="flex:0 0 auto;scroll-snap-align:start;width:120px;background:' + bg + ';border:' + border + ';border-radius:8px;padding:8px 10px;text-align:center;">' +
+      label +
+      '<div style="font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + (p.local||'?') + '</div>' +
+      '<div style="font-size:' + (tieneScore?'15':'12') + 'px;font-weight:700;margin:3px 0;color:' + scoreColor + ';">' + score + '</div>' +
+      '<div style="font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + (p.visita||'?') + '</div>' +
+      '</div>';
+  }).join('');
+}
+
+(function() {
+  var _obs = new MutationObserver(function() {
+    if ((typeof cPartidos !== 'undefined' && cPartidos.length) ||
+        (typeof cPartidosG !== 'undefined' && cPartidosG.length)) {
+      renderScrollerHoy();
+    }
+  });
+  var target = document.getElementById('lista-partidos');
+  _obs.observe(target || document.body, { childList: true });
+  setTimeout(renderScrollerHoy, 2000);
+  setTimeout(renderScrollerHoy, 5000);
+})();
 
 // Auto-sync: cada 2 min si hay partidos en curso
 (function() {
