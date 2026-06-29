@@ -139,10 +139,11 @@
   .br-pend{background:var(--gris-borde);color:var(--gris-texto);}
 
   /* ── RANKING ── */
-  .rtable{width:100%;border-collapse:collapse;font-size:13px;}
+  #ranking-tabla{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  .rtable{width:100%;border-collapse:collapse;font-size:13px;min-width:480px;}
   .rtable th{background:var(--verde);color:white;padding:8px 10px;text-align:left;
-    font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;}
-  .rtable td{padding:9px 10px;border-bottom:1px solid var(--gris-borde);}
+    font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap;}
+  .rtable td{padding:9px 10px;border-bottom:1px solid var(--gris-borde);white-space:nowrap;}
   .rtable tr:last-child td{border-bottom:none;}
   .rtable tr:hover td{background:var(--gris-bg);}
   .rtable tr.yo td{background:var(--verde-claro);}
@@ -212,6 +213,23 @@
     .vista{padding:10px;}
     .pred-fila{grid-template-columns:1fr 38px 14px 38px 1fr;gap:3px;}
     .pred-sc{width:34px;font-size:14px;}
+
+    /* Ranking tabla mobile */
+    #ranking-tabla{margin:0 -10px;border-radius:0;}
+    .rtable{font-size:12px;min-width:440px;}
+    .rtable th{padding:6px 8px;font-size:9px;}
+    .rtable td{padding:7px 8px;}
+    .pts-b{font-size:11px;padding:2px 6px;}
+
+    /* Indicador de scroll horizontal */
+    #ranking-tabla::after{
+      content:'← desliza →';
+      display:block;
+      text-align:center;
+      font-size:10px;
+      color:var(--gris-texto);
+      padding:4px 0 2px;
+    }
   }
 </style>
 </head>
@@ -773,7 +791,7 @@ function actualizarEnVivo() {
   if (!el) {
     el = document.createElement('div');
     el.id = '_envivo';
-    el.style.cssText = 'position:fixed;bottom:20px;right:16px;background:#c0392b;color:white;padding:8px 14px;border-radius:20px;font-size:12px;font-weight:700;z-index:999;box-shadow:0 2px 8px rgba(0,0,0,.3);cursor:pointer;display:none;animation:pulsar 1.5s infinite;';
+    el.style.cssText = 'position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#c0392b;color:white;padding:8px 18px;border-radius:20px;font-size:12px;font-weight:700;z-index:999;box-shadow:0 2px 8px rgba(0,0,0,.3);cursor:pointer;display:none;animation:pulsar 1.5s infinite;white-space:nowrap;';
     el.onclick = function() { var tab = document.querySelector('.tab'); if (tab) tab.click(); };
     document.body.appendChild(el);
   }
