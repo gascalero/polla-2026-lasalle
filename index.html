@@ -726,7 +726,10 @@ async function sbRpc(fn, params) {
 async function sbWrite(operation, tabla, body, eq) {
   const adminToken = sessionStorage.getItem('admin_session_token');
   const userToken  = sessionStorage.getItem('session_token');
-  const session_token = adminToken || userToken;
+  const adminOnlyTables = ['partidos_elim', 'partidos_g'];
+  const session_token = adminOnlyTables.includes(tabla)
+    ? (adminToken || userToken)
+    : (userToken || adminToken);
   if (!session_token) throw new Error('Sesión no iniciada. Recarga e inicia sesión.');
   const res = await fetch(`${window._sbUrl}/functions/v1/write-proxy`, {
     method: 'POST',
