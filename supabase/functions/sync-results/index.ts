@@ -185,9 +185,13 @@ Deno.serve(async (req) => {
         updated_at: new Date().toISOString(),
       }
 
-      // Si el partido tiene sync bloqueado, saltar completamente
+      // Si el partido tiene sync bloqueado, solo actualizar estado (no el marcador)
       if (partido.sync_bloqueado) {
-        skipped.push(`${apiHome} vs ${apiAway} (sync bloqueado)`)
+        await supabase.from('partidos_elim').update({
+          estado: STATUS_MAP[status] || 'pendiente',
+          updated_at: new Date().toISOString(),
+        }).eq('id', partido.id)
+        skipped.push(`${apiHome} vs ${apiAway} (marcador bloqueado)`)
         continue
       }
 
