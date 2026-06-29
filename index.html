@@ -437,6 +437,17 @@
     <div id="admin-penalti-miss"><div class="loading"><div class="spinner"></div></div></div>
   </div>
 
+  <!-- Log de auditoría -->
+  <div class="sec">
+    <div class="sec-titulo">🔍 Log de auditoría</div>
+    <p style="font-size:12px;color:var(--gris-texto);margin-bottom:10px;">Historial inmutable de todas las predicciones guardadas. Cada registro incluye fecha y hora exacta del servidor.</p>
+    <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+      <input type="text" id="audit-filtro-nombre" placeholder="Filtrar por participante..." style="flex:1;min-width:150px;padding:6px 10px;border:1px solid var(--gris-borde);border-radius:6px;font-size:12px;">
+      <button type="button" class="btn btn-v" style="font-size:12px;padding:6px 12px;" onclick="cargarAuditLog()">🔍 Buscar</button>
+    </div>
+    <div id="admin-audit-log"><p style="font-size:12px;color:var(--gris-texto);">Haz clic en Buscar para cargar el log.</p></div>
+  </div>
+
   <!-- Sistema de puntos -->
   <div class="sec">
     <div class="sec-titulo">🔑 Sistema de puntos</div>
@@ -983,6 +994,70 @@ function checkPin() {
     err.textContent = 'Error de red. Intenta de nuevo.';
     inp.value = '';
   });
+}
+
+async function cargarAuditLog() {
+  const cont = document.getElementById('admin-audit-log');
+  const filtro = document.getElementById('audit-filtro-nombre')?.value.trim().toLowerCase();
+  cont.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+  try {
+    // Traer participantes para cruzar nombres
+    const partsRes = await fetch(`${window._sbUrl}/rest/v1/participantes?select=id,nombre`, {
+      headers: { 'apikey': window._sbKey, 'Authorization': `Bearer ${window._sbKey}` }
+    });
+    const parts = await partsRes.json();
+    const nombresMap = {};
+    (parts || []).forEach(function(p) { nombresMap[p.id] = p.nombre; });
+
+    // Traer audit log via RPC (SECURITY DEFINER — bypasa RLS)
+    var rows = await sbRpc('get_audit_log', { p_limit: 200 });
+    if (!Array.isArray(rows)) { cont.innerHTML = '<p style="font-size:12px;color:var(--rojo);">Sin registros en el log.</p>'; return; }
+
+    // Filtrar por nombre si hay filtro
+    if (filtro) {
+      rows = rows.filter(function(r) {
+        var nombre = (nombresMap[r.participante_id] || '').toLowerCase();
+        return nombre.includes(filtro);
+      });
+    }
+
+    if (!rows.length) { cont.innerHTML = '<p style="font-size:12px;color:var(--gris-texto);">Sin registros.</p>'; return; }
+
+    cont.innerHTML = '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:11px;min-width:500px;">' +
+      '<thead><tr style="background:var(--verde);color:white;">' +
+      '<th style="padding:6px 8px;text-align:left;">Fecha/Hora (local)</th>' +
+      '<th style="padding:6px 8px;text-align:left;">Participante</th>' +
+      '<th style="padding:6px 8px;text-align:left;">Partido</th>' +
+      '<th style="padding:6px 8px;text-align:left;">Op.</th>' +
+      '<th style="padding:6px 8px;text-align:left;">Predicción</th>' +
+      '</tr></thead><tbody>' +
+      rows.map(function(r, i) {
+        var nombre = nombresMap[r.participante_id] || r.participante_id || '—';
+        var fecha = new Date(r.ts).toLocaleString();
+        var d = r.datos_nuevo || {};
+        var pred = (d.goles_local != null ? d.goles_local + '-' + d.goles_visita : '?');
+        if (d.pred_penaltis) pred += ' +pen(' + (d.pred_ganador_pen || '?') + ')';
+        var cambio = '';
+        if (r.operacion === 'UPDATE' && r.datos_antes) {
+          var a = r.datos_antes;
+          var antes = (a.goles_local != null ? a.goles_local + '-' + a.goles_visita : '?');
+          cambio = '<span style="color:var(--gris-texto);"> (antes: ' + antes + ')</span>';
+        }
+        var bg = i % 2 === 0 ? 'white' : 'var(--gris-bg)';
+        var opColor = r.operacion === 'INSERT' ? 'var(--verde)' : '#e67e22';
+        return '<tr style="background:' + bg + ';">' +
+          '<td style="padding:5px 8px;">' + fecha + '</td>' +
+          '<td style="padding:5px 8px;font-weight:600;">' + nombre + '</td>' +
+          '<td style="padding:5px 8px;">' + (r.partido_id || '—') + '</td>' +
+          '<td style="padding:5px 8px;font-weight:700;color:' + opColor + ';">' + r.operacion + '</td>' +
+          '<td style="padding:5px 8px;">' + pred + cambio + '</td>' +
+          '</tr>';
+      }).join('') +
+      '</tbody></table></div>' +
+      '<p style="font-size:10px;color:var(--gris-texto);margin-top:6px;">Mostrando ' + rows.length + ' registros más recientes.</p>';
+  } catch(e) {
+    cont.innerHTML = '<p style="font-size:12px;color:var(--rojo);">Error: ' + e.message + '</p>';
+  }
 }
 
 async function renderAdminPenaltiMiss() {
