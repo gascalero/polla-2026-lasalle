@@ -753,7 +753,7 @@ function mostrarToast(msg, tipo) {
 
 function actualizarEnVivo() {
   if (typeof cPartidos === 'undefined') return;
-  var vivos = cPartidos.filter(function(p) { return p.estado === 'en_curso'; });
+  var vivos = cPartidos.filter(function(p) { return p.estado === 'en_curso' || p.estado === 'IN_PLAY' || p.estado === 'PAUSED'; });
   var el = document.getElementById('_envivo');
   if (!el) {
     el = document.createElement('div');
@@ -777,7 +777,7 @@ function actualizarCuentaRegresiva() {
   if (typeof cPartidos === 'undefined') return;
   var ahora = Date.now();
   var proximos = cPartidos
-    .filter(function(p) { return p.estado === 'pendiente' && p.hora_inicio; })
+    .filter(function(p) { return (p.estado === 'pendiente' || p.estado === 'SCHEDULED' || p.estado === 'TIMED') && p.hora_inicio; })
     .map(function(p) { return { p: p, ms: new Date(p.hora_inicio).getTime() - ahora }; })
     .filter(function(x) { return x.ms > 0 && x.ms < 7200000; })
     .sort(function(a, b) { return a.ms - b.ms; });
@@ -816,13 +816,14 @@ function renderScrollerHoy() {
     String(ahora.getDate()).padStart(2,'0');
 
   function mismaFecha(p) {
-    // Chequear campo fecha primero (DATE: "2026-06-29")
-    if (p.fecha && String(p.fecha).slice(0,10) === hoy) return true;
-    // hora_inicio solo aplica si parece un timestamp (contiene T o -)
+    // Convertir hora_inicio UTC a fecha local del usuario
     if (p.hora_inicio) {
-      var s = String(p.hora_inicio);
-      if (s.indexOf('T') > -1 || (s.indexOf('-') > 0 && s.indexOf('-') < 5)) {
-        return s.slice(0,10) === hoy;
+      var d = new Date(p.hora_inicio);
+      if (!isNaN(d)) {
+        var fechaLocal = d.getFullYear() + '-' +
+          String(d.getMonth()+1).padStart(2,'0') + '-' +
+          String(d.getDate()).padStart(2,'0');
+        return fechaLocal === hoy;
       }
     }
     return false;
@@ -837,8 +838,9 @@ function renderScrollerHoy() {
   if (!lista.length) { wrap.style.display = 'none'; return; }
   wrap.style.display = 'block';
   cont.innerHTML = lista.map(function(p) {
-    var vivo = p.estado === 'en_curso';
-    var fin  = p.estado === 'finalizado';
+    var est  = p.estado;
+    var vivo = est === 'en_curso' || est === 'IN_PLAY' || est === 'PAUSED';
+    var fin  = est === 'finalizado' || est === 'FINISHED';
     var hora = '';
     if (p.hora_inicio) {
       var d = new Date(p.hora_inicio);
