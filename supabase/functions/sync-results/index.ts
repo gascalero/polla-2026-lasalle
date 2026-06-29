@@ -87,7 +87,7 @@ const STATUS_MAP: Record<string, string> = {
   'CANCELLED': 'pendiente',
 }
 
-const KNOCKOUT_STAGES = ['ROUND_OF_16', 'QUARTER_FINALS', 'SEMI_FINALS', 'THIRD_PLACE', 'FINAL']
+const KNOCKOUT_STAGES = ['LAST_32', 'ROUND_OF_32', 'ROUND_OF_16', 'QUARTER_FINALS', 'SEMI_FINALS', 'THIRD_PLACE', 'FINAL']
 
 Deno.serve(async (req) => {
   // CORS para llamadas desde el browser
@@ -115,12 +115,13 @@ Deno.serve(async (req) => {
     }
 
     const apiData = await apiRes.json()
+    const allStages = [...new Set((apiData.matches || []).map((m: any) => m.stage))]
     const knockoutMatches = (apiData.matches || []).filter((m: any) =>
       KNOCKOUT_STAGES.includes(m.stage)
     )
 
     if (!knockoutMatches.length) {
-      return new Response(JSON.stringify({ updated: 0, message: 'Sin partidos de eliminatorias aún' }), {
+      return new Response(JSON.stringify({ updated: 0, message: 'Sin partidos de eliminatorias aún', all_stages: allStages }), {
         headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
       })
     }
@@ -187,6 +188,7 @@ Deno.serve(async (req) => {
       skipped,
       errors,
       total_knockout: knockoutMatches.length,
+      all_stages: allStages,
     }), {
       headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
     })
