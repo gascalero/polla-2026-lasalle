@@ -411,6 +411,13 @@
     <div id="admin-partidos"><div class="loading"><div class="spinner"></div></div></div>
   </div>
 
+  <!-- Deducción por penaltis -->
+  <div class="sec">
+    <div class="sec-titulo">⚠️ Deducción por penaltis</div>
+    <p style="font-size:12px;color:var(--gris-texto);margin-bottom:12px;">Desactiva el -1 punto por partido si se acuerda no aplicarlo. Por defecto está activo en todos.</p>
+    <div id="admin-penalti-miss"><div class="loading"><div class="spinner"></div></div></div>
+  </div>
+
   <!-- Sistema de puntos -->
   <div class="sec">
     <div class="sec-titulo">🔑 Sistema de puntos</div>
@@ -454,7 +461,7 @@ function calcPtsE(partido, pred) {
   const penaltiOk = pred.pred_penaltis === true && partido.penaltis === true &&
     pred.pred_ganador_pen && pred.pred_ganador_pen === partido.ganador_pen;
   const isFinished = partido.estado === 'finalizado' || partido.estado === 'FINISHED';
-  const penaltiMiss = isFinished && pred.pred_penaltis === true && partido.penaltis !== true;
+  const penaltiMiss = isFinished && pred.pred_penaltis === true && partido.penaltis !== true && partido.penalti_miss_activo !== false;
   let total = exacto ? 3 : ganador ? 1 : 0;
   const golesL = !exacto && pL === rL;
   const golesV = !exacto && pV === rV;
@@ -935,6 +942,67 @@ function checkPin() {
     inp.value = '';
   });
 }
+
+async function renderAdminPenaltiMiss() {
+  const cont = document.getElementById('admin-penalti-miss');
+  if (!cont) return;
+  try {
+    const res = await fetch(`${window._sbUrl}/rest/v1/partidos_elim?select=id,local,visita,estado,penalti_miss_activo&order=id.asc`, {
+      headers: { 'apikey': window._sbKey, 'Authorization': `Bearer ${window._sbKey}` }
+    });
+    const partidos = await res.json();
+    if (!Array.isArray(partidos) || !partidos.length) {
+      cont.innerHTML = '<p style="font-size:12px;color:var(--gris-texto);">No hay partidos de eliminatorias cargados.</p>';
+      return;
+    }
+    cont.innerHTML = partidos.map(function(p) {
+      const activo = p.penalti_miss_activo !== false;
+      const estadoLabel = p.estado === 'finalizado' || p.estado === 'FINISHED' ? '✅ Finalizado' : p.estado === 'en_curso' ? '🔴 En curso' : '🕐 Pendiente';
+      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--gris-borde);">
+        <div>
+          <span style="font-size:13px;font-weight:600;">${p.local} vs ${p.visita}</span>
+          <span style="font-size:11px;color:var(--gris-texto);margin-left:8px;">${estadoLabel}</span>
+        </div>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+          <span style="font-size:11px;color:${activo ? 'var(--rojo,#e53935)' : 'var(--verde)'};">${activo ? '-1 activo' : 'Exento'}</span>
+          <input type="checkbox" ${activo ? 'checked' : ''} onchange="togglePenaltiMiss(${p.id}, this)" style="width:16px;height:16px;cursor:pointer;">
+        </label>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    cont.innerHTML = `<p style="font-size:12px;color:var(--rojo,#e53935);">Error al cargar: ${e.message}</p>`;
+  }
+}
+
+async function togglePenaltiMiss(pid, cb) {
+  const activo = cb.checked;
+  const label = cb.previousElementSibling;
+  cb.disabled = true;
+  try {
+    await sbWrite('update', 'partidos_elim', { penalti_miss_activo: activo }, { id: pid });
+    if (label) {
+      label.textContent = activo ? '-1 activo' : 'Exento';
+      label.style.color = activo ? 'var(--rojo,#e53935)' : 'var(--verde)';
+    }
+  } catch(e) {
+    mostrarToast('Error al guardar: ' + e.message, 'error');
+    cb.checked = !activo;
+  } finally {
+    cb.disabled = false;
+  }
+}
+
+// Cargar sección de penalti-miss cuando el admin está visible
+document.addEventListener('click', function(e) {
+  if (e.target.closest && e.target.closest('[onclick*="admin"]')) {
+    setTimeout(function() {
+      if (document.getElementById('vista-admin')?.classList.contains('activa') &&
+          sessionStorage.getItem('admin_ok') === '1') {
+        renderAdminPenaltiMiss();
+      }
+    }, 200);
+  }
+});
 
 // Ocultar el PIN admin del panel (ya no debe mostrarse en pantalla)
 document.addEventListener('DOMContentLoaded', function() {
