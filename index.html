@@ -623,21 +623,25 @@ async function verificarPin(id, nombre) {
   errEl.textContent = '';
   inp.disabled = true;
   try {
-    const res = await fetch(`${window._sbUrl}/functions/v1/auth`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${window._sbKey}` },
-      body: JSON.stringify({ participante_id: id, pin })
-    });
-    const data = await res.json();
-    if (!res.ok) {
+    const ok = await sbRpc('verify_pin', { p_id: id, p_pin: pin });
+    if (!ok) {
       errEl.textContent = '❌ PIN incorrecto. Inténtalo de nuevo.';
       inp.value = '';
       inp.disabled = false;
       inp.focus();
       return;
     }
-    sessionStorage.setItem('session_token', data.token);
-    sessionStorage.setItem('session_expires', data.expires_at);
+    // Crear sesión en background (no bloquea el login si falla)
+    fetch(`${window._sbUrl}/functions/v1/auth`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${window._sbKey}` },
+      body: JSON.stringify({ participante_id: id, pin })
+    }).then(r => r.json()).then(data => {
+      if (data.token) {
+        sessionStorage.setItem('session_token', data.token);
+        sessionStorage.setItem('session_expires', data.expires_at);
+      }
+    }).catch(() => {});
     seleccionarUsuario(id, nombre);
   } catch(e) {
     errEl.textContent = '❌ Error de red. Intenta de nuevo.';
@@ -930,17 +934,21 @@ function checkPin() {
   const val = inp.value;
   if (val.length < 4) { err.textContent = ''; return; }
   inp.disabled = true;
-  fetch(`${window._sbUrl}/functions/v1/auth`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${window._sbKey}` },
-    body: JSON.stringify({ admin_pin: val })
-  }).then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
-  .then(function(res) {
+  sbRpc('verify_admin_pin', { p_pin: val }).then(function(ok) {
     inp.disabled = false;
-    if (res.ok) {
+    if (ok) {
       sessionStorage.setItem('admin_ok', '1');
-      sessionStorage.setItem('admin_session_token', res.data.token);
-      sessionStorage.setItem('admin_session_expires', res.data.expires_at);
+      // Crear sesión admin en background
+      fetch(`${window._sbUrl}/functions/v1/auth`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${window._sbKey}` },
+        body: JSON.stringify({ admin_pin: val })
+      }).then(function(r) { return r.json(); }).then(function(data) {
+        if (data.token) {
+          sessionStorage.setItem('admin_session_token', data.token);
+          sessionStorage.setItem('admin_session_expires', data.expires_at);
+        }
+      }).catch(function() {});
       cerrarPin();
       irA('admin', null);
     } else {
