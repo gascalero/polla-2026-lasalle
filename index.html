@@ -844,7 +844,11 @@ function renderScrollerHoy() {
     var hora = '';
     if (p.hora_inicio) {
       var d = new Date(p.hora_inicio);
-      if (!isNaN(d)) hora = d.toLocaleTimeString('es-CO', {hour:'2-digit', minute:'2-digit'});
+      if (!isNaN(d)) {
+        var hStr = d.toLocaleTimeString(undefined, {hour:'2-digit', minute:'2-digit'});
+        var tzStr = d.toLocaleTimeString(undefined, {timeZoneName:'short'}).split(' ').slice(-1)[0];
+        hora = hStr + ' ' + tzStr;
+      }
     }
     var tieneScore = p.goles_local != null && p.goles_visita != null;
     var score = tieneScore ? p.goles_local + ' – ' + p.goles_visita + (p.penaltis ? '<sup style="font-size:8px"> pen</sup>' : '') : 'vs';
