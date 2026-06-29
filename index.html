@@ -623,14 +623,21 @@ async function verificarPin(id, nombre) {
   errEl.textContent = '';
   inp.disabled = true;
   try {
-    const ok = await sbRpc('verify_pin', { p_id: id, p_pin: pin });
-    if (!ok) {
+    const res = await fetch(`${window._sbUrl}/functions/v1/auth`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ participante_id: id, pin })
+    });
+    const data = await res.json();
+    if (!res.ok) {
       errEl.textContent = '❌ PIN incorrecto. Inténtalo de nuevo.';
       inp.value = '';
       inp.disabled = false;
       inp.focus();
       return;
     }
+    sessionStorage.setItem('session_token', data.token);
+    sessionStorage.setItem('session_expires', data.expires_at);
     seleccionarUsuario(id, nombre);
   } catch(e) {
     errEl.textContent = '❌ Error de red. Intenta de nuevo.';
@@ -723,13 +730,14 @@ async function sbRpc(fn, params) {
 }
 
 async function sbWrite(operation, tabla, body, eq) {
-  const headers = { 'Content-Type': 'application/json' };
-  const adminPin = sessionStorage.getItem('admin_pin');
-  if (adminPin) headers['x-admin-pin'] = adminPin;
+  const adminToken = sessionStorage.getItem('admin_session_token');
+  const userToken  = sessionStorage.getItem('session_token');
+  const session_token = adminToken || userToken;
+  if (!session_token) throw new Error('Sesión no iniciada. Recarga e inicia sesión.');
   const res = await fetch(`${window._sbUrl}/functions/v1/write-proxy`, {
     method: 'POST',
-    headers,
-    body: JSON.stringify({ operation, tabla, body, eq, write_token: WRITE_TOKEN })
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ operation, tabla, body, eq, session_token })
   });
   if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || e.message || `HTTP ${res.status}`); }
   const text = await res.text();
@@ -922,11 +930,17 @@ function checkPin() {
   const val = inp.value;
   if (val.length < 4) { err.textContent = ''; return; }
   inp.disabled = true;
-  sbRpc('verify_admin_pin', { p_pin: val }).then(function(ok) {
+  fetch(`${window._sbUrl}/functions/v1/auth`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ admin_pin: val })
+  }).then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
+  .then(function(res) {
     inp.disabled = false;
-    if (ok) {
+    if (res.ok) {
       sessionStorage.setItem('admin_ok', '1');
-      sessionStorage.setItem('admin_pin', val);
+      sessionStorage.setItem('admin_session_token', res.data.token);
+      sessionStorage.setItem('admin_session_expires', res.data.expires_at);
       cerrarPin();
       irA('admin', null);
     } else {

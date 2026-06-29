@@ -1,14 +1,12 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-const SUPABASE_URL        = Deno.env.get('SUPABASE_URL')!
-const SERVICE_KEY         = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-const WRITE_TOKEN         = Deno.env.get('WRITE_TOKEN')!
-const ADMIN_PIN           = Deno.env.get('ADMIN_PIN')!
+const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
+const SERVICE_KEY  = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'authorization, content-type, x-admin-pin',
+  'Access-Control-Allow-Headers': 'content-type',
 }
 
 // Qué tabla puede hacer qué operaciones, y si requiere admin
@@ -22,15 +20,13 @@ const TABLE_RULES: Record<string, { ops: string[], adminOnly: boolean }> = {
 
 function err(msg: string, status = 400) {
   return new Response(JSON.stringify({ error: msg }), {
-    status,
-    headers: { ...CORS, 'Content-Type': 'application/json' },
+    status, headers: { ...CORS, 'Content-Type': 'application/json' },
   })
 }
 
 function ok(data: unknown) {
   return new Response(JSON.stringify(data ?? null), {
-    status: 200,
-    headers: { ...CORS, 'Content-Type': 'application/json' },
+    status: 200, headers: { ...CORS, 'Content-Type': 'application/json' },
   })
 }
 
@@ -38,54 +34,56 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: CORS })
   if (req.method !== 'POST') return err('Method not allowed', 405)
 
-  // ── 1. Parsear body ────────────────────────────────────────────────────────
   let body: any
   try { body = await req.json() } catch { return err('Invalid JSON') }
 
-  const { operation, tabla, body: payload, eq, write_token } = body
+  const { operation, tabla, body: payload, eq, session_token } = body
 
-  // ── 2. Validar WRITE_TOKEN ─────────────────────────────────────────────────
-  if (!write_token || write_token !== WRITE_TOKEN) {
-    return err('Unauthorized', 401)
+  // ── 1. Validar session_token ───────────────────────────────────────────────
+  if (!session_token) return err('session_token requerido', 401)
+
+  const supabase = createClient(SUPABASE_URL, SERVICE_KEY)
+  const { data: session, error: sErr } = await supabase
+    .from('sessions')
+    .select('token, participante_id, is_admin, expires_at')
+    .eq('token', session_token)
+    .single()
+
+  if (sErr || !session) return err('Sesión inválida', 401)
+  if (new Date(session.expires_at) < new Date()) {
+    await supabase.from('sessions').delete().eq('token', session_token)
+    return err('Sesión expirada — vuelve a iniciar sesión', 401)
   }
 
-  // ── 3. Validar tabla y operación ───────────────────────────────────────────
+  // ── 2. Validar tabla y operación ───────────────────────────────────────────
   const rule = TABLE_RULES[tabla]
   if (!rule) return err(`Tabla no permitida: ${tabla}`, 403)
   if (!rule.ops.includes(operation)) {
     return err(`Operación '${operation}' no permitida en '${tabla}'`, 403)
   }
 
-  // ── 4. Validar admin PIN para operaciones de admin ─────────────────────────
-  if (rule.adminOnly) {
-    const adminPin = req.headers.get('x-admin-pin')
-    if (!adminPin || adminPin !== ADMIN_PIN) {
-      return err('Admin PIN requerido', 403)
-    }
+  // ── 3. Validar permisos según tipo de sesión ───────────────────────────────
+  if (rule.adminOnly && !session.is_admin) {
+    return err('Se requiere sesión de admin', 403)
   }
 
-  // ── 5. Validar participante_id para predicciones ───────────────────────────
+  // ── 4. Para predicciones: verificar ownership ──────────────────────────────
   if (!rule.adminOnly) {
     const rows = Array.isArray(payload) ? payload : [payload]
     const ids  = [...new Set(rows.map((r: any) => r?.participante_id).filter(Boolean))]
 
-    if (!ids.length) return err('participante_id requerido')
+    // Solo se puede escribir para el propio participante_id de la sesión
+    if (!ids.length || ids.some(id => String(id) !== String(session.participante_id))) {
+      return err('No puedes escribir predicciones de otro participante', 403)
+    }
 
-    // Verificar que todos los IDs existen en la tabla participantes
-    const supabase = createClient(SUPABASE_URL, SERVICE_KEY)
-    const { data: parts, error } = await supabase
-      .from('participantes')
-      .select('id')
-      .in('id', ids)
-
-    if (error) return err('Error verificando participante')
-    if (!parts || parts.length !== ids.length) {
-      return err('participante_id inválido', 403)
+    // Para updates con eq: verificar que el eq.participante_id coincide
+    if (eq?.participante_id && String(eq.participante_id) !== String(session.participante_id)) {
+      return err('No puedes modificar predicciones de otro participante', 403)
     }
   }
 
-  // ── 6. Ejecutar escritura con service role ─────────────────────────────────
-  const supabase = createClient(SUPABASE_URL, SERVICE_KEY)
+  // ── 5. Ejecutar escritura con service role ─────────────────────────────────
   let result: any, dbError: any
 
   if (operation === 'insert') {
@@ -94,12 +92,6 @@ Deno.serve(async (req) => {
     ;({ data: result, error: dbError } = await supabase.from(tabla).upsert(payload).select())
   } else if (operation === 'update') {
     let q = supabase.from(tabla).update(payload)
-    if (eq) {
-      for (const [col, val] of Object.entries(eq)) q = (q as any).eq(col, val)
-    }
-    ;({ data: result, error: dbError } = await (q as any).select())
-  } else if (operation === 'delete') {
-    let q = supabase.from(tabla).delete()
     if (eq) {
       for (const [col, val] of Object.entries(eq)) q = (q as any).eq(col, val)
     }
