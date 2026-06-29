@@ -864,16 +864,16 @@ function renderScrollerHoy() {
 }
 
 (function() {
-  var _obs = new MutationObserver(function() {
-    if ((typeof cPartidos !== 'undefined' && cPartidos.length) ||
-        (typeof cPartidosG !== 'undefined' && cPartidosG.length)) {
+  var intentos = 0;
+  var poll = setInterval(function() {
+    intentos++;
+    var hayDatos = (typeof cPartidos !== 'undefined' && cPartidos.length > 0) ||
+                  (typeof cPartidosG !== 'undefined' && cPartidosG.length > 0);
+    if (hayDatos || intentos > 30) {
       renderScrollerHoy();
+      clearInterval(poll);
     }
-  });
-  var target = document.getElementById('lista-partidos');
-  _obs.observe(target || document.body, { childList: true });
-  setTimeout(renderScrollerHoy, 2000);
-  setTimeout(renderScrollerHoy, 5000);
+  }, 300);
 })();
 
 // Auto-sync: cada 2 min si hay partidos en curso
