@@ -914,14 +914,11 @@ function abrirPredsDesdeScroller(id, tipo) {
     var panelId = 'panel-' + tipo + '-' + id;
     var panel = document.getElementById(panelId);
     if (panel) {
-      // Abrir el panel si no está abierto
       if (!panel.classList.contains('open')) {
-        togglePredPanel(panelId, tipo, id);
+        togglePredPanel(panelId, id, tipo);
       }
-      // Scroll al partido
-      var card = panel.closest('[id^="card-"], .partido-card') || panel.parentElement;
-      if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      else panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      var scrollTarget = panel.parentElement || panel;
+      scrollTarget.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   }, 350);
 }
