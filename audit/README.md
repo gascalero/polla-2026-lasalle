@@ -1,12 +1,21 @@
 # Log de Auditoría — Polla Mundial 2026
 
-> **Exportado:** 30/06/2026 00:33:10 COL
-> **Total de registros:** 59
+> **Exportado:** 30/06/2026 11:59:25 COL
+> **Total de registros:** 68
 > Este log es generado automáticamente 4 veces al día (11am, 2pm, 5pm, 8pm COL) desde la base de datos.
 > Cada registro refleja exactamente lo que un participante guardó, con timestamp del servidor.
 
 | Fecha/Hora (COL) | Participante | Partido | Op. | Marcador predicho | Penaltis | Ganador tanda |
 |---|---|---|---|---|---|---|
+| 30/06 11:57:03 | Nicolás | R16_05 | 🆕 | 2-2 | ✓ | Noruega |
+| 30/06 11:31:20 | Osma | R16_05 | 🆕 | 1-2 | — | — |
+| 30/06 11:31:20 | Osma | R16_06 | 🆕 | 2-0 | — | — |
+| 30/06 11:31:20 | Osma | R16_07 | 🆕 | 1-1 | ✓ | Ecuador |
+| 30/06 10:42:29 | Fofi | R16_08 | ✏️ | 1-0 | — | — |
+| 30/06 10:42:29 | Fofi | R16_07 | ✏️ | 1-0 | — | — |
+| 30/06 10:42:28 | Fofi | R16_06 | ✏️ | 1-0 | — | — |
+| 30/06 10:42:28 | Fofi | R16_05 | ✏️ | 1-1 | — | — |
+| 30/06 10:22:10 | Helmer | R16_05 | 🆕 | 2-1 | — | — |
 | 30/06 00:17:18 | Bonilla | R16_12 | ✏️ | 2-1 | — | — |
 | 30/06 00:17:17 | Bonilla | R16_10 | ✏️ | 2-0 | — | — |
 | 30/06 00:17:16 | Bonilla | R16_09 | ✏️ | 2-1 | — | — |
