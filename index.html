@@ -991,6 +991,7 @@ function checkPin() {
       sessionStorage.setItem('admin_session_token', token);
       cerrarPin();
       irA('admin', null);
+      setTimeout(function() { renderAdminPenaltiMiss(); renderAdminSyncBloqueo(); }, 400);
     } else {
       err.textContent = 'PIN incorrecto.';
       inp.value = '';
