@@ -1251,6 +1251,7 @@ function renderRankingServerSide() {
         + '<th style="padding:8px 6px;text-align:center;">Pts</th>'
         + '<th style="padding:8px 6px;text-align:center;" title="Marcadores exactos">🎯</th>'
         + '<th style="padding:8px 6px;text-align:center;" title="Ganadores acertados">✅</th>'
+        + '<th style="padding:8px 6px;text-align:center;" title="Puntos por goles parciales (+0.5 por cada equipo acertado sin exacto)">⚽</th>'
         + '<th style="padding:8px 6px;text-align:center;" title="Puntos ganados por acertar ganador de tanda (+2 pts c/u)">🥅+</th>'
         + '<th style="padding:8px 6px;text-align:center;" title="Puntos descontados por predecir penaltis sin que los hubiera (-1 pt c/u)">❌pen</th>'
         + '</tr></thead><tbody>';
@@ -1273,13 +1274,14 @@ function renderRankingServerSide() {
           + '<td style="padding:8px 6px;text-align:center;font-weight:800;font-size:15px;">' + parseFloat(r.pts_total).toFixed(1).replace('.0','') + '</td>'
           + '<td style="padding:8px 6px;text-align:center;">' + (r.exactos || 0) + '</td>'
           + '<td style="padding:8px 6px;text-align:center;">' + (r.ganadores || 0) + '</td>'
+          + '<td style="padding:8px 6px;text-align:center;">' + (parseFloat(r.pts_goles) > 0 ? '+' + parseFloat(r.pts_goles) : '<span style="color:var(--gris-texto);">—</span>') + '</td>'
           + '<td style="padding:8px 6px;text-align:center;">' + penOkCell + '</td>'
           + '<td style="padding:8px 6px;text-align:center;">' + missCell + '</td>'
           + '</tr>';
       });
       html += '</tbody></table>'
         + '<p style="font-size:11px;color:var(--gris-texto);margin-top:8px;padding:0 4px;">'
-        + '🥅+ y ❌pen muestran <b>puntos</b> ganados/descontados, no conteo de aciertos/errores.'
+        + '⚽, 🥅+ y ❌pen muestran <b>puntos</b> ganados/descontados, no conteo de aciertos/errores.'
         + '</p></div>';
       cont.innerHTML = html;
     }).catch(function() {
