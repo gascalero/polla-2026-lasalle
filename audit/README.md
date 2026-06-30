@@ -1,12 +1,15 @@
 # Log de Auditoría — Polla Mundial 2026
 
-> **Exportado:** 30/06/2026 11:59:25 COL
-> **Total de registros:** 68
+> **Exportado:** 30/06/2026 12:46:22 COL
+> **Total de registros:** 71
 > Este log es generado automáticamente 4 veces al día (11am, 2pm, 5pm, 8pm COL) desde la base de datos.
 > Cada registro refleja exactamente lo que un participante guardó, con timestamp del servidor.
 
 | Fecha/Hora (COL) | Participante | Partido | Op. | Marcador predicho | Penaltis | Ganador tanda |
 |---|---|---|---|---|---|---|
+| 30/06 12:09:35 | Fofi | R16_08 | ✏️ | 1-0 | — | — |
+| 30/06 12:09:35 | Fofi | R16_07 | ✏️ | 1-0 | — | — |
+| 30/06 12:09:34 | Fofi | R16_06 | ✏️ | 2-0 | — | — |
 | 30/06 11:57:03 | Nicolás | R16_05 | 🆕 | 2-2 | ✓ | Noruega |
 | 30/06 11:31:20 | Osma | R16_05 | 🆕 | 1-2 | — | — |
 | 30/06 11:31:20 | Osma | R16_06 | 🆕 | 2-0 | — | — |
