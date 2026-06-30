@@ -32,35 +32,15 @@ Deno.serve(async (req) => {
   if (body.participante_id && body.pin) {
     const { participante_id, pin } = body
 
-    // Verificar PIN contra la BD
-    const { data: part, error } = await supabase
-      .from('participantes')
-      .select('id, pin')
-      .eq('id', participante_id)
-      .single()
+    // verify_and_create_session hace la comparación bcrypt y crea la sesión
+    const { data: token, error: rpcErr } = await supabase
+      .rpc('verify_and_create_session', { p_id: participante_id, p_pin: String(pin) })
 
-    if (error || !part) return err('Participante no encontrado', 404)
+    if (rpcErr) return err('Error verificando PIN', 500)
+    if (!token) return err('PIN incorrecto', 401)
 
-    // Comparación segura del PIN
-    if (String(part.pin) !== String(pin)) return err('PIN incorrecto', 401)
-
-    // Limpiar sesiones anteriores del usuario
-    await supabase.from('sessions')
-      .delete()
-      .eq('participante_id', participante_id)
-      .eq('is_admin', false)
-
-    // Crear nueva sesión
     const expires_at = new Date(Date.now() + USER_TTL_HOURS * 3600 * 1000).toISOString()
-    const { data: session, error: sErr } = await supabase
-      .from('sessions')
-      .insert({ participante_id, is_admin: false, expires_at })
-      .select('token, expires_at')
-      .single()
-
-    if (sErr || !session) return err('Error creando sesión', 500)
-
-    return new Response(JSON.stringify({ token: session.token, expires_at: session.expires_at }), {
+    return new Response(JSON.stringify({ token, expires_at }), {
       headers: { ...CORS, 'Content-Type': 'application/json' },
     })
   }

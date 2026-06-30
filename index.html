@@ -464,7 +464,7 @@
 </div>
 
 <script>
-(function(){var _f=window.fetch;window.fetch=function(u,o){return _f.call(this,u,o).then(function(r){var s=typeof u==="string"?u:"";if(s.includes("/rest/v1/participantes")&&!s.includes("/rpc/")&&(!o||!o.method||o.method==="GET")){return r.clone().json().then(function(d){if(!Array.isArray(d))return r;return new Response(JSON.stringify(d.map(function(p){var x=Object.assign({},p);delete x.pin;return x;})),{status:r.status,headers:{"Content-Type":"application/json"}});}).catch(function(){return r;});}return r;});};})();
+(function(){var _f=window.fetch;window.fetch=function(u,o){if(typeof u==="string"&&u.includes("/rest/v1/participantes")&&!u.includes("/rpc/")&&!u.includes("participantes_pub")&&(!o||!o.method||o.method==="GET")){u=u.replace("/rest/v1/participantes","/rest/v1/participantes_pub");}return _f.call(this,u,o);};})();
 </script>
 
 <script>
@@ -1016,7 +1016,7 @@ async function cargarAuditLog() {
   cont.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
   try {
     // Traer participantes para cruzar nombres
-    const partsRes = await fetch(`${window._sbUrl}/rest/v1/participantes?select=id,nombre`, {
+    const partsRes = await fetch(`${window._sbUrl}/rest/v1/participantes_pub?select=id,nombre`, {
       headers: { 'apikey': window._sbKey, 'Authorization': `Bearer ${window._sbKey}` }
     });
     const parts = await partsRes.json();
