@@ -1316,7 +1316,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Mostrar predicciones de todos en cuanto el partido inicia (sin esperar resultado)
 (function() {
-  var REVELADO = {};
+  var EN_VUELO = {};  // solo bloquea fetches simultáneos, se limpia al terminar
 
   function partidoYaInicio(partidoId) {
     var fuente = (typeof cPartidos !== 'undefined' ? cPartidos : []).concat(typeof cPartidosElim !== 'undefined' ? cPartidosElim : []);
@@ -1326,8 +1326,10 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   async function revelarPredicciones(panel, partidoId) {
-    if (REVELADO[panel.id]) return;
-    REVELADO[panel.id] = true;
+    if (EN_VUELO[panel.id]) return;
+    // Si ya no hay ningún 'Oculto', no hay nada que revelar
+    if (!panel.querySelector('.br-pend')) return;
+    EN_VUELO[panel.id] = true;
 
     // Construir mapa nombre→id desde cParticipantes
     var nombreAId = {};
@@ -1341,9 +1343,9 @@ document.addEventListener('DOMContentLoaded', function() {
         headers: { 'apikey': window._sbKey, 'Authorization': 'Bearer ' + window._sbKey }
       });
       preds = await res.json();
-    } catch(e) { REVELADO[panel.id] = false; return; }
+    } catch(e) { EN_VUELO[panel.id] = false; return; }
 
-    if (!Array.isArray(preds)) { REVELADO[panel.id] = false; return; }
+    if (!Array.isArray(preds)) { EN_VUELO[panel.id] = false; return; }
 
     var predMap = {};
     preds.forEach(function(pr) { predMap[pr.participante_id] = pr; });
@@ -1367,6 +1369,7 @@ document.addEventListener('DOMContentLoaded', function() {
       var pen = pr.pred_penaltis ? (' &middot; Pen: ' + (pr.pred_ganador_pen || '?')) : '';
       span.innerHTML = '<span class="br" style="background:#e8f0fe;color:#1a56db;font-weight:600;">' + marcador + pen + '</span>';
     });
+    EN_VUELO[panel.id] = false;  // listo, próximo re-render puede volver a revelar
   }
 
   // Observa TODO el document para capturar paneles creados dinámicamente
