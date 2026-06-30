@@ -177,8 +177,27 @@ Deno.serve(async (req) => {
       }
 
       const swapped = partido.local === apiAway
-      const homeScore = match.score?.extraTime?.home ?? match.score?.fullTime?.home ?? null
-      const awayScore = match.score?.extraTime?.away ?? match.score?.fullTime?.away ?? null
+      const duration = match.score?.duration // REGULAR | EXTRA_TIME | PENALTY_SHOOTOUT
+
+      // Calcular score correcto según duración:
+      // REGULAR: usar fullTime
+      // EXTRA_TIME / PENALTY_SHOOTOUT: regularTime + extraTime (extraTime es incremental)
+      let homeScore: number | null = null
+      let awayScore: number | null = null
+
+      if (duration === 'EXTRA_TIME' || duration === 'PENALTY_SHOOTOUT') {
+        const rtH = match.score?.regularTime?.home
+        const rtA = match.score?.regularTime?.away
+        const etH = match.score?.extraTime?.home ?? 0
+        const etA = match.score?.extraTime?.away ?? 0
+        if (rtH != null && rtA != null) {
+          homeScore = rtH + etH
+          awayScore = rtA + etA
+        }
+      } else {
+        homeScore = match.score?.fullTime?.home ?? null
+        awayScore = match.score?.fullTime?.away ?? null
+      }
 
       const updateData: Record<string, any> = {
         estado: STATUS_MAP[status] || 'pendiente',
@@ -204,7 +223,10 @@ Deno.serve(async (req) => {
       if (status === 'FINISHED' && match.score?.penalties?.home != null) {
         const penHome = match.score.penalties.home
         const penAway = match.score.penalties.away
-        const penWinnerApi = penHome > penAway ? match.homeTeam.name : match.awayTeam.name
+        // Para penaltis, el ganador viene de fullTime (que en PENALTY_SHOOTOUT muestra la tanda)
+        const ftH = match.score?.fullTime?.home ?? penHome
+        const ftA = match.score?.fullTime?.away ?? penAway
+        const penWinnerApi = ftH > ftA ? match.homeTeam.name : match.awayTeam.name
         updateData.penaltis = true
         updateData.ganador_pen = TEAM_MAP[penWinnerApi] || penWinnerApi
       }
