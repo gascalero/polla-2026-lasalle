@@ -701,21 +701,18 @@ async function confirmarCambioPin() {
   const nuevo = document.getElementById('pin-nuevo').value.trim();
   const confirmar = document.getElementById('pin-confirmar').value.trim();
   const err = document.getElementById('pin-cambiar-err');
-  let pinOk;
-  try {
-    pinOk = await sbRpc('verify_pin', { p_id: usuarioActual.id, p_pin: actual });
-  } catch(e) {
-    err.textContent = '❌ Error al verificar PIN. Intenta de nuevo.'; return;
-  }
-  if (!pinOk) { err.textContent = '❌ PIN actual incorrecto.'; return; }
   if (!/^\d{4}$/.test(nuevo)) { err.textContent = '❌ El PIN nuevo debe ser 4 dígitos.'; return; }
   if (nuevo !== confirmar) { err.textContent = '❌ Los PINs nuevos no coinciden.'; return; }
+  let ok;
   try {
-    await sbPatch('participantes', { pin: nuevo }, { id: usuarioActual.id });
-    err.style.color = 'var(--verde)';
-    err.textContent = '✅ PIN cambiado correctamente.';
-    setTimeout(cerrarCambiarPin, 1400);
-  } catch(e) { err.textContent = 'Error: ' + e.message; }
+    ok = await sbRpc('change_pin', { p_id: usuarioActual.id, p_pin_actual: actual, p_pin_nuevo: nuevo });
+  } catch(e) {
+    err.textContent = '❌ Error al cambiar PIN. Intenta de nuevo.'; return;
+  }
+  if (!ok) { err.textContent = '❌ PIN actual incorrecto.'; return; }
+  err.style.color = 'var(--verde)';
+  err.textContent = '✅ PIN cambiado correctamente.';
+  setTimeout(cerrarCambiarPin, 1400);
 }
 
 // Datos en vivo de la API — solo para el scroller, nunca afectan la BD
