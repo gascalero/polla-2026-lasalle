@@ -1281,7 +1281,8 @@ function renderRankingServerSide() {
       });
       html += '</tbody></table>'
         + '<p style="font-size:11px;color:var(--gris-texto);margin-top:8px;padding:0 4px;">'
-        + '⚽, 🥅+ y ❌pen muestran <b>puntos</b> ganados/descontados, no conteo de aciertos/errores.'
+        + 'Todas las columnas son <b>desglose de puntos</b> que suman el total. '
+        + '🎯 exacto (+3 c/u) · ✅ ganador (+1 c/u) · ⚽ gol parcial (+0.5 c/u) · 🥅+ tanda acertada (+2 c/u) · ❌pen penaltis fallados (−1 c/u).'
         + '</p></div>';
       cont.innerHTML = html;
     }).catch(function() {
