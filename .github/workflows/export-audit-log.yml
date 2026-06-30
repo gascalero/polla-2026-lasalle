@@ -1,0 +1,109 @@
+name: Exportar Log de Auditoría
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'   # cada 30 minutos
+  workflow_dispatch:           # también manual desde GitHub
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Obtener log desde Supabase
+        env:
+          SUPABASE_URL: https://ezurkzgwaitseowokzmo.supabase.co
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          mkdir -p audit
+
+          # Obtener participantes para cruzar nombres
+          curl -s "$SUPABASE_URL/rest/v1/participantes?select=id,nombre" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+            -o audit/participantes.json
+
+          # Obtener audit log via RPC
+          curl -s "$SUPABASE_URL/rest/v1/rpc/get_audit_log" \
+            -X POST \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{"p_limit": 1000}' \
+            -o audit/audit_log_raw.json
+
+          # Generar JSON limpio con timestamp
+          TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          echo "{\"exportado_en\": \"$TIMESTAMP\", \"registros\": $(cat audit/audit_log_raw.json)}" \
+            > audit/audit_log.json
+
+          rm -f audit/audit_log_raw.json
+
+      - name: Generar vista legible en Markdown
+        run: |
+          python3 << 'PYEOF'
+          import json, os
+          from datetime import datetime, timezone, timedelta
+
+          COL = timezone(timedelta(hours=-5))
+
+          with open('audit/audit_log.json') as f:
+              data = json.load(f)
+
+          with open('audit/participantes.json') as f:
+              parts = {p['id']: p['nombre'] for p in json.load(f)}
+
+          ts_export = datetime.fromisoformat(data['exportado_en'].replace('Z','+00:00'))
+          ts_col = ts_export.astimezone(COL).strftime('%d/%m/%Y %H:%M:%S COL')
+
+          rows = data.get('registros', [])
+
+          md = f"""# Log de Auditoría — Polla Mundial 2026
+
+          > **Exportado:** {ts_col}
+          > **Total de registros:** {len(rows)}
+          > Este log es generado automáticamente cada 30 minutos desde la base de datos.
+          > Cada registro refleja exactamente lo que un participante guardó, con timestamp del servidor.
+
+          | Fecha/Hora (COL) | Participante | Partido | Op. | Marcador predicho | Penaltis | Ganador tanda |
+          |---|---|---|---|---|---|---|
+          """
+
+          for r in rows:
+              ts = datetime.fromisoformat(r['ts'].replace('+00','+00:00'))
+              ts_str = ts.astimezone(COL).strftime('%d/%m %H:%M:%S')
+              nombre = parts.get(r.get('participante_id',''), r.get('participante_id','?'))
+              partido = r.get('partido_id', '—')
+              op = '🆕' if r['operacion'] == 'INSERT' else '✏️'
+              d = r.get('datos_nuevo') or {}
+              gl = d.get('goles_local')
+              gv = d.get('goles_visita')
+              score = f"{gl}-{gv}" if gl is not None else '?'
+              pen = '✓' if d.get('pred_penaltis') else '—'
+              ganador = d.get('pred_ganador_pen') or '—'
+              md += f"| {ts_str} | {nombre} | {partido} | {op} | {score} | {pen} | {ganador} |\n"
+
+          md = '\n'.join(line.lstrip() for line in md.split('\n'))
+
+          with open('audit/README.md', 'w') as f:
+              f.write(md)
+
+          print(f"Generado README.md con {len(rows)} registros")
+          PYEOF
+
+      - name: Commit y push
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add audit/
+          if git diff --cached --quiet; then
+            echo "Sin cambios en el log"
+          else
+            git commit -m "audit: export $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+            git push
+          fi
