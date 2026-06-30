@@ -25,8 +25,8 @@ jobs:
         run: |
           mkdir -p audit
 
-          # Obtener participantes para cruzar nombres
-          curl -s "$SUPABASE_URL/rest/v1/participantes?select=id,nombre" \
+          # Obtener participantes para cruzar nombres (participantes_pub, sin PIN)
+          curl -s "$SUPABASE_URL/rest/v1/participantes_pub?select=id,nombre" \
             -H "apikey: $SUPABASE_ANON_KEY" \
             -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
             -o audit/participantes.json
