@@ -1233,8 +1233,7 @@ document.addEventListener('input', function(e) {
 });
 
 // Override renderizado del ranking — usa get_ranking() server-side
-(function() {
-  function renderRankingServerSide() {
+function renderRankingServerSide() {
     const cont = document.getElementById('ranking-tabla');
     if (!cont) return;
     cont.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
@@ -1284,22 +1283,32 @@ document.addEventListener('input', function(e) {
     });
   }
 
-  // Esperar a que el DOM y las funciones del ofuscado estén listas, luego sobrescribir
-  document.addEventListener('DOMContentLoaded', function() {
-    setTimeout(function() {
-      // Interceptar la vista de ranking para usar nuestra versión
-      const orig = window.irA;
-      window.irA = function(vista, el) {
-        orig && orig(vista, el);
-        if (vista === 'ranking') renderRankingServerSide();
-      };
-      // Si ya está en la vista ranking al cargar
-      if (document.getElementById('vista-ranking')?.classList.contains('activa')) {
+// Esperar a que el DOM y las funciones del ofuscado estén listas, luego sobrescribir
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(function() {
+    const orig = window.irA;
+    window.irA = function(vista, el) {
+      if (vista === 'ranking') {
+        // Activar la vista directamente sin pasar por el ofuscado
+        document.querySelectorAll('.vista').forEach(function(v) { v.classList.remove('activa'); });
+        document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('activa'); });
+        const v = document.getElementById('vista-ranking');
+        if (v) v.classList.add('activa');
+        if (el) el.classList.add('activa');
         renderRankingServerSide();
+      } else {
+        orig && orig(vista, el);
       }
-    }, 500);
-  });
-})();
+    };
+    if (document.getElementById('vista-ranking')?.classList.contains('activa')) {
+      renderRankingServerSide();
+    }
+    // Sobrescribir onclick directo de los tabs de ranking
+    document.querySelectorAll('.tab[onclick*="ranking"]').forEach(function(btn) {
+      btn.onclick = function() { window.irA('ranking', this); };
+    });
+  }, 200);
+});
 </script>
 </body>
 </html>
