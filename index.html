@@ -1313,6 +1313,90 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }, 200);
 });
+
+// Mostrar predicciones de todos en cuanto el partido inicia (sin esperar resultado)
+(function() {
+  var REVELADO = {};
+
+  function partidoYaInicio(partidoId) {
+    var fuente = (typeof cPartidos !== 'undefined' ? cPartidos : []).concat(typeof cPartidosElim !== 'undefined' ? cPartidosElim : []);
+    var p = fuente.find(function(x) { return x.id === partidoId; });
+    if (!p || !p.hora_inicio) return false;
+    return new Date(p.hora_inicio) <= new Date();
+  }
+
+  async function revelarPredicciones(panel, partidoId) {
+    if (REVELADO[panel.id]) return;
+    REVELADO[panel.id] = true;
+
+    // Construir mapa nombre→id desde cParticipantes
+    var nombreAId = {};
+    if (typeof cParticipantes !== 'undefined') {
+      cParticipantes.forEach(function(x) { nombreAId[x.nombre.trim()] = x.id; });
+    }
+
+    var preds;
+    try {
+      var res = await fetch(window._sbUrl + '/rest/v1/predicciones_elim?partido_id=eq.' + partidoId + '&select=participante_id,goles_local,goles_visita,pred_penaltis,pred_ganador_pen', {
+        headers: { 'apikey': window._sbKey, 'Authorization': 'Bearer ' + window._sbKey }
+      });
+      preds = await res.json();
+    } catch(e) { REVELADO[panel.id] = false; return; }
+
+    if (!Array.isArray(preds)) { REVELADO[panel.id] = false; return; }
+
+    var predMap = {};
+    preds.forEach(function(pr) { predMap[pr.participante_id] = pr; });
+
+    panel.querySelectorAll('.pred-row').forEach(function(row) {
+      var oculto = row.querySelector('.br-pend');
+      if (!oculto || oculto.textContent !== 'Oculto') return;
+      var nameEl = row.querySelector('span[style*="font-weight"]');
+      if (!nameEl) return;
+      var nombre = nameEl.textContent.trim();
+      var partId = nombreAId[nombre];
+      var pr = partId ? predMap[partId] : null;
+
+      var span = oculto.parentElement;
+      if (!pr) {
+        span.innerHTML = '<span class="br" style="background:#f0f0f0;color:#888;">Sin predicción</span>';
+        return;
+      }
+      var gl = pr.goles_local, gv = pr.goles_visita;
+      var marcador = (gl != null && gv != null) ? (gl + '-' + gv) : '?-?';
+      var pen = pr.pred_penaltis ? (' &middot; Pen: ' + (pr.pred_ganador_pen || '?')) : '';
+      span.innerHTML = '<span class="br" style="background:#e8f0fe;color:#1a56db;font-weight:600;">' + marcador + pen + '</span>';
+    });
+  }
+
+  // Observa TODO el document para capturar paneles creados dinámicamente
+  var obs = new MutationObserver(function(mutations) {
+    for (var i = 0; i < mutations.length; i++) {
+      var mut = mutations[i];
+      // Detectar panel que acaba de abrirse (class="pred-panel open")
+      if (mut.type === 'attributes' && mut.attributeName === 'class') {
+        var el = mut.target;
+        if (el.classList && el.classList.contains('pred-panel') && el.classList.contains('open')) {
+          var m = el.id && el.id.match(/panel-[EG]-(.+)/);
+          if (m && partidoYaInicio(m[1])) revelarPredicciones(el, m[1]);
+        }
+      }
+      // Detectar cuando el contenido del panel se renderiza (se agregan pred-rows)
+      if (mut.type === 'childList') {
+        var target = mut.target;
+        while (target) {
+          if (target.classList && target.classList.contains('pred-panel') && target.classList.contains('open')) {
+            var m2 = target.id && target.id.match(/panel-[EG]-(.+)/);
+            if (m2 && partidoYaInicio(m2[1])) { revelarPredicciones(target, m2[1]); break; }
+          }
+          target = target.parentElement;
+        }
+      }
+    }
+  });
+
+  obs.observe(document.body, { subtree: true, attributes: true, attributeFilter: ['class'], childList: true });
+})();
 </script>
 </body>
 </html>
