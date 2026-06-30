@@ -2,8 +2,11 @@ name: Exportar Log de Auditoría
 
 on:
   schedule:
-    - cron: '*/30 * * * *'   # cada 30 minutos
-  workflow_dispatch:           # también manual desde GitHub
+    - cron: '0 16 * * *'   # 11:00 AM COL
+    - cron: '0 19 * * *'   # 2:00 PM COL
+    - cron: '0 22 * * *'   # 5:00 PM COL
+    - cron: '0 1  * * *'   # 8:00 PM COL
+  workflow_dispatch:          # también manual desde GitHub
 
 jobs:
   export:
