@@ -1251,8 +1251,8 @@ function renderRankingServerSide() {
         + '<th style="padding:8px 6px;text-align:center;">Pts</th>'
         + '<th style="padding:8px 6px;text-align:center;" title="Marcadores exactos">🎯</th>'
         + '<th style="padding:8px 6px;text-align:center;" title="Ganadores acertados">✅</th>'
-        + '<th style="padding:8px 6px;text-align:center;" title="Penaltis acertados (ganador de tanda)">🥅+</th>'
-        + '<th style="padding:8px 6px;text-align:center;" title="Penaltis fallados (-1 pt c/u)">❌pen</th>'
+        + '<th style="padding:8px 6px;text-align:center;" title="Puntos ganados por acertar ganador de tanda (+2 pts c/u)">🥅+</th>'
+        + '<th style="padding:8px 6px;text-align:center;" title="Puntos descontados por predecir penaltis sin que los hubiera (-1 pt c/u)">❌pen</th>'
         + '</tr></thead><tbody>';
 
       rows.forEach(function(r, i) {
@@ -1263,8 +1263,9 @@ function renderRankingServerSide() {
           ? '<span style="color:var(--rojo);font-weight:700;">-' + miss + '</span>'
           : '<span style="color:var(--gris-texto);">—</span>';
         const penOk = parseInt(r.penalti_ok) || 0;
-        const penOkCell = penOk > 0
-          ? '<span style="color:var(--verde);font-weight:700;">+' + penOk + '</span>'
+        const penOkPts = penOk * 2;
+        const penOkCell = penOkPts > 0
+          ? '<span style="color:var(--verde);font-weight:700;">+' + penOkPts + '</span>'
           : '<span style="color:var(--gris-texto);">—</span>';
         html += '<tr style="background:' + bg + ';border-bottom:1px solid var(--gris-borde);">'
           + '<td style="padding:8px 6px;text-align:center;font-size:16px;">' + pos + '</td>'
@@ -1276,7 +1277,10 @@ function renderRankingServerSide() {
           + '<td style="padding:8px 6px;text-align:center;">' + missCell + '</td>'
           + '</tr>';
       });
-      html += '</tbody></table></div>';
+      html += '</tbody></table>'
+        + '<p style="font-size:11px;color:var(--gris-texto);margin-top:8px;padding:0 4px;">'
+        + '🥅+ y ❌pen muestran <b>puntos</b> ganados/descontados, no conteo de aciertos/errores.'
+        + '</p></div>';
       cont.innerHTML = html;
     }).catch(function() {
       cont.innerHTML = '<p style="font-size:13px;color:var(--rojo);padding:10px;">Error cargando ranking.</p>';
