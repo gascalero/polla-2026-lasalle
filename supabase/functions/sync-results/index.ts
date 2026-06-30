@@ -142,62 +142,32 @@ Deno.serve(async (req) => {
       KNOCKOUT_STAGES.includes(m.stage)
     )
 
-    if (!knockoutMatches.length) {
-      return new Response(JSON.stringify({ updated: 0, message: 'Sin partidos de eliminatorias aún', all_stages: allStages }), {
-        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+    // Solo devolver datos en vivo para el banner — sin escribir nada en la BD
+    const live = knockoutMatches
+      .filter((m: any) => m.status === 'IN_PLAY' || m.status === 'PAUSED' || m.status === 'FINISHED')
+      .map((m: any) => {
+        const duration = m.score?.duration
+        let home: number | null = null
+        let away: number | null = null
+        if (duration === 'EXTRA_TIME' || duration === 'PENALTY_SHOOTOUT') {
+          const rtH = m.score?.regularTime?.home
+          const rtA = m.score?.regularTime?.away
+          if (rtH != null) { home = rtH + (m.score?.extraTime?.home ?? 0); away = rtA + (m.score?.extraTime?.away ?? 0) }
+        } else {
+          home = m.score?.fullTime?.home ?? null
+          away = m.score?.fullTime?.away ?? null
+        }
+        return {
+          local:    TEAM_MAP[m.homeTeam.name] || m.homeTeam.name,
+          visita:   TEAM_MAP[m.awayTeam.name] || m.awayTeam.name,
+          estado:   STATUS_MAP[m.status] || m.status,
+          goles_local:  home,
+          goles_visita: away,
+          penaltis: m.score?.duration === 'PENALTY_SHOOTOUT',
+        }
       })
-    }
 
-    // 2. Leer partidos de la DB
-    const { data: partidos, error: dbErr } = await supabase.from('partidos_elim').select('*')
-    if (dbErr) throw new Error(dbErr.message)
-
-    // 3. Cruzar y actualizar
-    let updated = 0
-    const skipped: string[] = []
-    const errors: string[] = []
-
-    for (const match of knockoutMatches) {
-      const status = match.status
-      // Solo procesar partidos en curso o finalizados
-      if (status !== 'IN_PLAY' && status !== 'PAUSED' && status !== 'FINISHED') continue
-
-      const apiHome = TEAM_MAP[match.homeTeam.name] || match.homeTeam.name
-      const apiAway = TEAM_MAP[match.awayTeam.name] || match.awayTeam.name
-
-      // Buscar partido en DB por equipos (en cualquier orden)
-      const partido = (partidos || []).find((p: any) =>
-        (p.local === apiHome && p.visita === apiAway) ||
-        (p.local === apiAway && p.visita === apiHome)
-      )
-
-      if (!partido) {
-        skipped.push(`${apiHome} vs ${apiAway}`)
-        continue
-      }
-
-      // Solo actualizar estado — scores y penaltis los ingresa el admin manualmente
-      const updateData: Record<string, any> = {
-        estado: STATUS_MAP[status] || 'pendiente',
-        updated_at: new Date().toISOString(),
-      }
-
-      const { error } = await supabase
-        .from('partidos_elim')
-        .update(updateData)
-        .eq('id', partido.id)
-
-      if (error) errors.push(`${partido.id}: ${error.message}`)
-      else updated++
-    }
-
-    return new Response(JSON.stringify({
-      updated,
-      skipped,
-      errors,
-      total_knockout: knockoutMatches.length,
-      all_stages: allStages,
-    }), {
+    return new Response(JSON.stringify({ live, all_stages: allStages }), {
       headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
     })
 

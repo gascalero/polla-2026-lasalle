@@ -718,6 +718,9 @@ async function confirmarCambioPin() {
   } catch(e) { err.textContent = 'Error: ' + e.message; }
 }
 
+// Datos en vivo de la API — solo para el scroller, nunca afectan la BD
+var cPartidosLive = [];
+
 async function sincronizarResultados() {
   const btn = document.getElementById('btn-sync');
   const status = document.getElementById('sync-status');
@@ -733,14 +736,12 @@ async function sincronizarResultados() {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
-    if (status) { status.style.color = 'var(--verde)'; status.textContent = `✅ ${data.updated} partido(s) actualizado(s).${data.skipped?.length ? ` Sin cruzar: ${data.skipped.join(', ')}.` : ''}`; }
-    if (data.updated > 0) {
-      mostrarToast(`🔔 ${data.updated} resultado(s) actualizado(s)`, 'ok');
-      cPartidos = await sbGet('partidos_elim') || cPartidos;
-      renderVista();
-      actualizarEnVivo();
+    // Guardar datos en vivo solo en memoria para el scroller
+    if (Array.isArray(data.live)) {
+      cPartidosLive = data.live;
       renderScrollerHoy();
     }
+    if (status) { status.style.color = 'var(--verde)'; status.textContent = `✅ Banner actualizado (${cPartidosLive.length} partidos en vivo).`; }
   } catch(e) {
     if (status) { status.style.color = 'var(--rojo)'; status.textContent = `❌ Error: ${e.message}`; }
   } finally {
@@ -889,6 +890,11 @@ function renderScrollerHoy() {
   wrap.style.display = 'block';
   cont.innerHTML = lista.map(function(item) {
     var p    = item.p;
+    // Mezclar con datos en vivo solo para el display del banner
+    var live = (cPartidosLive || []).find(function(l) {
+      return l.local === p.local && l.visita === p.visita;
+    });
+    if (live) { p = Object.assign({}, p, { goles_local: live.goles_local, goles_visita: live.goles_visita, estado: live.estado, penaltis: live.penaltis }); }
     var tipo = item.tipo;
     var est  = p.estado;
     var vivo = est === 'en_curso' || est === 'IN_PLAY' || est === 'PAUSED';
