@@ -1231,6 +1231,75 @@ document.addEventListener('input', function(e) {
     toggle.title = isDraw ? 'Empate — ¿va a penaltis?' : '';
   }
 });
+
+// Override renderizado del ranking — usa get_ranking() server-side
+(function() {
+  function renderRankingServerSide() {
+    const cont = document.getElementById('ranking-tabla');
+    if (!cont) return;
+    cont.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+    sbRpc('get_ranking', {}).then(function(rows) {
+      if (!rows || !rows.length) {
+        cont.innerHTML = '<p style="font-size:13px;color:var(--gris-texto);padding:10px;">Sin datos.</p>';
+        return;
+      }
+      const medalles = ['🥇','🥈','🥉'];
+      let html = '<div style="overflow-x:auto;">'
+        + '<table style="width:100%;border-collapse:collapse;font-size:13px;min-width:360px;">'
+        + '<thead><tr style="background:var(--verde);color:white;">'
+        + '<th style="padding:8px 6px;text-align:center;">#</th>'
+        + '<th style="padding:8px 6px;text-align:left;">Participante</th>'
+        + '<th style="padding:8px 6px;text-align:center;">Pts</th>'
+        + '<th style="padding:8px 6px;text-align:center;" title="Marcadores exactos">🎯</th>'
+        + '<th style="padding:8px 6px;text-align:center;" title="Ganadores acertados">✅</th>'
+        + '<th style="padding:8px 6px;text-align:center;" title="Penaltis acertados (ganador de tanda)">🥅+</th>'
+        + '<th style="padding:8px 6px;text-align:center;" title="Penaltis fallados (-1 pt c/u)">❌pen</th>'
+        + '</tr></thead><tbody>';
+
+      rows.forEach(function(r, i) {
+        const bg = i % 2 === 0 ? 'var(--fondo)' : 'var(--fondo-card)';
+        const pos = medalles[i] || (i + 1);
+        const miss = parseInt(r.penalti_miss) || 0;
+        const missCell = miss > 0
+          ? '<span style="color:var(--rojo);font-weight:700;">-' + miss + '</span>'
+          : '<span style="color:var(--gris-texto);">—</span>';
+        const penOk = parseInt(r.penalti_ok) || 0;
+        const penOkCell = penOk > 0
+          ? '<span style="color:var(--verde);font-weight:700;">+' + penOk + '</span>'
+          : '<span style="color:var(--gris-texto);">—</span>';
+        html += '<tr style="background:' + bg + ';border-bottom:1px solid var(--gris-borde);">'
+          + '<td style="padding:8px 6px;text-align:center;font-size:16px;">' + pos + '</td>'
+          + '<td style="padding:8px 6px;font-weight:600;">' + r.nombre + '</td>'
+          + '<td style="padding:8px 6px;text-align:center;font-weight:800;font-size:15px;">' + parseFloat(r.pts_total).toFixed(1).replace('.0','') + '</td>'
+          + '<td style="padding:8px 6px;text-align:center;">' + (r.exactos || 0) + '</td>'
+          + '<td style="padding:8px 6px;text-align:center;">' + (r.ganadores || 0) + '</td>'
+          + '<td style="padding:8px 6px;text-align:center;">' + penOkCell + '</td>'
+          + '<td style="padding:8px 6px;text-align:center;">' + missCell + '</td>'
+          + '</tr>';
+      });
+      html += '</tbody></table></div>';
+      cont.innerHTML = html;
+    }).catch(function() {
+      cont.innerHTML = '<p style="font-size:13px;color:var(--rojo);padding:10px;">Error cargando ranking.</p>';
+    });
+  }
+
+  // Esperar a que el DOM y las funciones del ofuscado estén listas, luego sobrescribir
+  document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(function() {
+      // Interceptar la vista de ranking para usar nuestra versión
+      const orig = window.irA;
+      window.irA = function(vista, el) {
+        orig && orig(vista, el);
+        if (vista === 'ranking') renderRankingServerSide();
+      };
+      // Si ya está en la vista ranking al cargar
+      if (document.getElementById('vista-ranking')?.classList.contains('activa')) {
+        renderRankingServerSide();
+      }
+    }, 500);
+  });
+})();
 </script>
 </body>
 </html>
