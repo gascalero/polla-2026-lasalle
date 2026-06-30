@@ -1,12 +1,24 @@
 # Log de Auditoría — Polla Mundial 2026
 
-> **Exportado:** 30/06/2026 15:12:02 COL
-> **Total de registros:** 107
+> **Exportado:** 30/06/2026 16:30:32 COL
+> **Total de registros:** 119
 > Este log es generado automáticamente 4 veces al día (11am, 2pm, 5pm, 8pm COL) desde la base de datos.
 > Cada registro refleja exactamente lo que un participante guardó, con timestamp del servidor.
 
 | Fecha/Hora (COL) | Participante | Partido | Op. | Marcador predicho | Penaltis | Ganador tanda |
 |---|---|---|---|---|---|---|
+| 30/06 15:37:12 | Fofi | R16_08 | ✏️ | 1-0 | — | — |
+| 30/06 15:37:11 | Fofi | R16_07 | ✏️ | 1-0 | — | — |
+| 30/06 15:37:11 | Fofi | R16_06 | ✏️ | 2-0 | — | — |
+| 30/06 15:36:39 | Fofi | R16_08 | ✏️ | 1-0 | — | — |
+| 30/06 15:36:39 | Fofi | R16_07 | ✏️ | 1-0 | — | — |
+| 30/06 15:36:39 | Fofi | R16_06 | ✏️ | 8-0 | — | — |
+| 30/06 15:35:57 | Fofi | R16_08 | ✏️ | 1-0 | — | — |
+| 30/06 15:35:57 | Fofi | R16_07 | ✏️ | 1-0 | — | — |
+| 30/06 15:35:56 | Fofi | R16_06 | ✏️ | 5-0 | — | — |
+| 30/06 15:35:29 | Fofi | R16_08 | ✏️ | 1-0 | — | — |
+| 30/06 15:35:29 | Fofi | R16_07 | ✏️ | 1-0 | — | — |
+| 30/06 15:35:28 | Fofi | R16_06 | ✏️ | 3-0 | — | — |
 | 30/06 15:01:04 | Helmer | R16_06 | 🆕 | 3-1 | — | — |
 | 30/06 14:52:16 | Fofi | R16_08 | ✏️ | 1-0 | — | — |
 | 30/06 14:52:16 | Fofi | R16_07 | ✏️ | 1-0 | — | — |
