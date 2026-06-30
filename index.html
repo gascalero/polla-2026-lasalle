@@ -610,7 +610,7 @@ async function guardarPin(id) {
   const orig = btn.textContent;
   btn.textContent = '…'; btn.disabled = true;
   try {
-    await sbPatch('participantes', { pin }, { id });
+    await sbRpc('admin_set_pin', { p_id: id, p_pin: pin });
     const p = cParticipantes.find(x => x.id === id);
     if (p) p.pin = pin;
     btn.textContent = '✓'; btn.style.background = 'var(--verde-mid)';
