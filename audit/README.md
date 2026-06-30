@@ -1,6 +1,6 @@
 # Log de Auditoría — Polla Mundial 2026
 
-> **Exportado:** 30/06/2026 16:30:32 COL
+> **Exportado:** 30/06/2026 18:03:30 COL
 > **Total de registros:** 119
 > Este log es generado automáticamente 4 veces al día (11am, 2pm, 5pm, 8pm COL) desde la base de datos.
 > Cada registro refleja exactamente lo que un participante guardó, con timestamp del servidor.
