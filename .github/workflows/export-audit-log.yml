@@ -26,19 +26,33 @@ jobs:
           mkdir -p audit
 
           # Obtener participantes para cruzar nombres (participantes_pub, sin PIN)
-          curl -s "$SUPABASE_URL/rest/v1/participantes_pub?select=id,nombre" \
+          HTTP_PARTS=$(curl -s -w "%{http_code}" "$SUPABASE_URL/rest/v1/participantes_pub?select=id,nombre" \
             -H "apikey: $SUPABASE_ANON_KEY" \
             -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
-            -o audit/participantes.json
+            -o audit/participantes.json)
+          echo "participantes HTTP $HTTP_PARTS"
 
           # Obtener audit log via RPC
-          curl -s "$SUPABASE_URL/rest/v1/rpc/get_audit_log" \
+          HTTP_AUDIT=$(curl -s -w "%{http_code}" "$SUPABASE_URL/rest/v1/rpc/get_audit_log" \
             -X POST \
             -H "apikey: $SUPABASE_ANON_KEY" \
             -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
             -H "Content-Type: application/json" \
             -d '{"p_limit": 1000}' \
-            -o audit/audit_log_raw.json
+            -o audit/audit_log_raw.json)
+          echo "audit_log HTTP $HTTP_AUDIT"
+
+          if [ "$HTTP_AUDIT" != "200" ]; then
+            echo "ERROR: Supabase devolvió HTTP $HTTP_AUDIT al obtener audit log"
+            cat audit/audit_log_raw.json
+            exit 1
+          fi
+
+          # Validar que la respuesta sea un array JSON
+          if ! python3 -c "import json,sys; d=json.load(open('audit/audit_log_raw.json')); assert isinstance(d,list), f'esperado array, recibido {type(d).__name__}: {str(d)[:200]}'"; then
+            echo "ERROR: respuesta del audit log no es un array JSON"
+            exit 1
+          fi
 
           # Generar JSON limpio con timestamp
           TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
@@ -50,7 +64,7 @@ jobs:
       - name: Generar vista legible en Markdown
         run: |
           python3 << 'PYEOF'
-          import json, os
+          import json, sys
           from datetime import datetime, timezone, timedelta
 
           COL = timezone(timedelta(hours=-5))
@@ -58,13 +72,26 @@ jobs:
           with open('audit/audit_log.json') as f:
               data = json.load(f)
 
-          with open('audit/participantes.json') as f:
-              parts = {p['id']: p['nombre'] for p in json.load(f)}
+          # Cargar participantes con validación
+          try:
+              with open('audit/participantes.json') as f:
+                  raw = json.load(f)
+              if not isinstance(raw, list):
+                  print(f"WARN: participantes.json no es array ({type(raw).__name__}), usando dict vacío")
+                  parts = {}
+              else:
+                  parts = {p['id']: p['nombre'] for p in raw if isinstance(p, dict) and 'id' in p}
+          except Exception as e:
+              print(f"WARN: error leyendo participantes.json: {e}, usando dict vacío")
+              parts = {}
 
           ts_export = datetime.fromisoformat(data['exportado_en'].replace('Z','+00:00'))
           ts_col = ts_export.astimezone(COL).strftime('%d/%m/%Y %H:%M:%S COL')
 
           rows = data.get('registros', [])
+          if not isinstance(rows, list):
+              print(f"ERROR: registros no es lista: {type(rows).__name__}")
+              sys.exit(1)
 
           md = f"""# Log de Auditoría — Polla Mundial 2026
 
@@ -78,11 +105,16 @@ jobs:
           """
 
           for r in rows:
-              ts = datetime.fromisoformat(r['ts'].replace('+00','+00:00'))
-              ts_str = ts.astimezone(COL).strftime('%d/%m %H:%M:%S')
+              if not isinstance(r, dict):
+                  continue
+              try:
+                  ts = datetime.fromisoformat(r['ts'].replace('+00','+00:00'))
+                  ts_str = ts.astimezone(COL).strftime('%d/%m %H:%M:%S')
+              except Exception:
+                  ts_str = r.get('ts', '?')
               nombre = parts.get(r.get('participante_id',''), r.get('participante_id','?'))
               partido = r.get('partido_id', '—')
-              op = '🆕' if r['operacion'] == 'INSERT' else '✏️'
+              op = '🆕' if r.get('operacion') == 'INSERT' else '✏️'
               d = r.get('datos_nuevo') or {}
               gl = d.get('goles_local')
               gv = d.get('goles_visita')
