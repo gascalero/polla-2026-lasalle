@@ -1,12 +1,30 @@
 # Log de Auditoría — Polla Mundial 2026
 
-> **Exportado:** 30/06/2026 20:40:05 COL
-> **Total de registros:** 136
+> **Exportado:** 01/07/2026 00:15:00 COL
+> **Total de registros:** 154
 > Este log es generado automáticamente 4 veces al día (11am, 2pm, 5pm, 8pm COL) desde la base de datos.
 > Cada registro refleja exactamente lo que un participante guardó, con timestamp del servidor.
 
 | Fecha/Hora (COL) | Participante | Partido | Op. | Marcador predicho | Penaltis | Ganador tanda |
 |---|---|---|---|---|---|---|
+| 30/06 23:28:07 | Franzua | R16_13 | ✏️ | 2-0 | — | — |
+| 30/06 23:28:07 | Franzua | R16_16 | ✏️ | 3-0 | — | — |
+| 30/06 23:28:06 | Franzua | R16_11 | ✏️ | 0-2 | — | — |
+| 30/06 23:28:06 | Franzua | R16_15 | ✏️ | 1-0 | — | — |
+| 30/06 23:28:05 | Franzua | R16_14 | ✏️ | 2-1 | — | — |
+| 30/06 23:28:05 | Franzua | R16_12 | ✏️ | 2-0 | — | — |
+| 30/06 23:28:04 | Franzua | R16_10 | ✏️ | 2-1 | — | — |
+| 30/06 23:28:04 | Franzua | R16_09 | ✏️ | 2-1 | — | — |
+| 30/06 23:28:03 | Franzua | R16_08 | ✏️ | 3-0 | — | — |
+| 30/06 23:27:55 | Franzua | R16_08 | ✏️ | 3-0 | — | — |
+| 30/06 23:27:55 | Franzua | R16_09 | 🆕 | 2-1 | — | — |
+| 30/06 23:27:55 | Franzua | R16_10 | 🆕 | 2-1 | — | — |
+| 30/06 23:27:55 | Franzua | R16_12 | 🆕 | 2-0 | — | — |
+| 30/06 23:27:55 | Franzua | R16_14 | 🆕 | 2-1 | — | — |
+| 30/06 23:27:55 | Franzua | R16_15 | 🆕 | 1-0 | — | — |
+| 30/06 23:27:55 | Franzua | R16_11 | 🆕 | 0-2 | — | — |
+| 30/06 23:27:55 | Franzua | R16_16 | 🆕 | 3-0 | — | — |
+| 30/06 23:27:55 | Franzua | R16_13 | 🆕 | 2-0 | — | — |
 | 30/06 20:13:42 | Fofi | R16_08 | ✏️ | 1-0 | — | — |
 | 30/06 20:13:41 | Fofi | R16_07 | ✏️ | 0-0 | ✓ | Ecuador |
 | 30/06 20:11:25 | Fofi | R16_08 | ✏️ | 1-0 | — | — |
