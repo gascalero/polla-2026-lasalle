@@ -1,12 +1,18 @@
 # Log de Auditoría — Polla Mundial 2026
 
-> **Exportado:** 01/07/2026 00:15:00 COL
-> **Total de registros:** 154
+> **Exportado:** 01/07/2026 12:46:25 COL
+> **Total de registros:** 160
 > Este log es generado automáticamente 4 veces al día (11am, 2pm, 5pm, 8pm COL) desde la base de datos.
 > Cada registro refleja exactamente lo que un participante guardó, con timestamp del servidor.
 
 | Fecha/Hora (COL) | Participante | Partido | Op. | Marcador predicho | Penaltis | Ganador tanda |
 |---|---|---|---|---|---|---|
+| 01/07 11:56:01 | Osma | R16_09 | 🆕 | 0-0 | ✓ | Bélgica |
+| 01/07 11:56:01 | Osma | R16_10 | 🆕 | 2-0 | — | — |
+| 01/07 10:55:22 | Nicolás | R16_09 | 🆕 | 1-2 | — | — |
+| 01/07 10:55:22 | Nicolás | R16_08 | 🆕 | 2-0 | — | — |
+| 01/07 10:55:22 | Nicolás | R16_10 | 🆕 | 3-1 | — | — |
+| 01/07 10:46:27 | Helmer | R16_08 | 🆕 | 2-1 | — | — |
 | 30/06 23:28:07 | Franzua | R16_13 | ✏️ | 2-0 | — | — |
 | 30/06 23:28:07 | Franzua | R16_16 | ✏️ | 3-0 | — | — |
 | 30/06 23:28:06 | Franzua | R16_11 | ✏️ | 0-2 | — | — |
