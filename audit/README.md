@@ -1,12 +1,29 @@
 # Log de Auditoría — Polla Mundial 2026
 
-> **Exportado:** 30/06/2026 18:03:30 COL
-> **Total de registros:** 119
+> **Exportado:** 30/06/2026 20:40:05 COL
+> **Total de registros:** 136
 > Este log es generado automáticamente 4 veces al día (11am, 2pm, 5pm, 8pm COL) desde la base de datos.
 > Cada registro refleja exactamente lo que un participante guardó, con timestamp del servidor.
 
 | Fecha/Hora (COL) | Participante | Partido | Op. | Marcador predicho | Penaltis | Ganador tanda |
 |---|---|---|---|---|---|---|
+| 30/06 20:13:42 | Fofi | R16_08 | ✏️ | 1-0 | — | — |
+| 30/06 20:13:41 | Fofi | R16_07 | ✏️ | 0-0 | ✓ | Ecuador |
+| 30/06 20:11:25 | Fofi | R16_08 | ✏️ | 1-0 | — | — |
+| 30/06 20:11:25 | Fofi | R16_07 | ✏️ | 0-0 | ✓ | — |
+| 30/06 20:11:23 | Nicolás | R16_07 | 🆕 | 1-1 | ✓ | México |
+| 30/06 20:11:19 | Fofi | R16_08 | ✏️ | 1-0 | — | — |
+| 30/06 20:11:19 | Fofi | R16_07 | ✏️ | 1-0 | ✓ | — |
+| 30/06 19:11:11 | Fofi | R16_08 | ✏️ | 1-0 | — | — |
+| 30/06 19:11:10 | Fofi | R16_07 | ✏️ | 0-0 | ✓ | Ecuador |
+| 30/06 18:52:41 | Casilimas | R16_08 | ✏️ | 2-0 | — | — |
+| 30/06 18:52:41 | Casilimas | R16_07 | ✏️ | 1-2 | — | — |
+| 30/06 18:52:41 | Casilimas | R16_09 | 🆕 | 2-1 | — | — |
+| 30/06 18:52:41 | Casilimas | R16_10 | 🆕 | 3-1 | — | — |
+| 30/06 18:52:41 | Casilimas | R16_12 | 🆕 | 2-0 | — | — |
+| 30/06 18:52:41 | Casilimas | R16_14 | 🆕 | 2-1 | — | — |
+| 30/06 18:52:41 | Casilimas | R16_15 | 🆕 | 1-1 | ✓ | Suiza |
+| 30/06 18:16:48 | Helmer | R16_07 | 🆕 | 0-2 | — | — |
 | 30/06 15:37:12 | Fofi | R16_08 | ✏️ | 1-0 | — | — |
 | 30/06 15:37:11 | Fofi | R16_07 | ✏️ | 1-0 | — | — |
 | 30/06 15:37:11 | Fofi | R16_06 | ✏️ | 2-0 | — | — |
