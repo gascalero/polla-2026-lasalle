@@ -1,12 +1,20 @@
 # Log de Auditoría — Polla Mundial 2026
 
-> **Exportado:** 01/07/2026 15:49:14 COL
-> **Total de registros:** 162
+> **Exportado:** 01/07/2026 18:03:48 COL
+> **Total de registros:** 170
 > Este log es generado automáticamente 4 veces al día (11am, 2pm, 5pm, 8pm COL) desde la base de datos.
 > Cada registro refleja exactamente lo que un participante guardó, con timestamp del servidor.
 
 | Fecha/Hora (COL) | Participante | Partido | Op. | Marcador predicho | Penaltis | Ganador tanda |
 |---|---|---|---|---|---|---|
+| 01/07 18:03:28 | Vaca | R16_13 | ✏️ | 2-0 | — | — |
+| 01/07 18:03:27 | Vaca | R16_16 | ✏️ | 1-0 | — | — |
+| 01/07 18:03:26 | Vaca | R16_11 | ✏️ | 1-1 | ✓ | — |
+| 01/07 18:03:26 | Vaca | R16_15 | ✏️ | 2-1 | — | — |
+| 01/07 18:03:25 | Vaca | R16_14 | ✏️ | 1-1 | ✓ | — |
+| 01/07 18:03:25 | Vaca | R16_12 | ✏️ | 2-0 | — | — |
+| 01/07 18:03:24 | Vaca | R16_10 | ✏️ | 3-0 | — | — |
+| 01/07 17:04:10 | Fofi | R16_10 | 🆕 | 2-0 | — | — |
 | 01/07 14:42:18 | Helmer | R16_09 | 🆕 | 0-1 | — | — |
 | 01/07 13:14:22 | Fofi | R16_09 | 🆕 | 1-0 | — | — |
 | 01/07 11:56:01 | Osma | R16_09 | 🆕 | 0-0 | ✓ | Bélgica |
