@@ -1,12 +1,26 @@
 # Log de Auditoría — Polla Mundial 2026
 
-> **Exportado:** 01/07/2026 18:03:48 COL
-> **Total de registros:** 170
+> **Exportado:** 01/07/2026 23:52:53 COL
+> **Total de registros:** 184
 > Este log es generado automáticamente 4 veces al día (11am, 2pm, 5pm, 8pm COL) desde la base de datos.
 > Cada registro refleja exactamente lo que un participante guardó, con timestamp del servidor.
 
 | Fecha/Hora (COL) | Participante | Partido | Op. | Marcador predicho | Penaltis | Ganador tanda |
 |---|---|---|---|---|---|---|
+| 01/07 22:20:11 | Fofi | R16_12 | ✏️ | 1-0 | — | — |
+| 01/07 22:09:41 | Fofi | R16_12 | ✏️ | 2-0 | — | — |
+| 01/07 22:09:32 | Fofi | R16_12 | ✏️ | 1-0 | — | — |
+| 01/07 21:44:06 | Fofi | R16_12 | 🆕 | 2-0 | — | — |
+| 01/07 21:13:28 | Camilo | R16_13 | ✏️ | 2-1 | — | — |
+| 01/07 21:13:28 | Camilo | R16_16 | ✏️ | 5-0 | — | — |
+| 01/07 21:13:27 | Camilo | R16_11 | ✏️ | 0-1 | — | — |
+| 01/07 21:13:27 | Camilo | R16_15 | ✏️ | 2-1 | — | — |
+| 01/07 21:13:27 | Camilo | R16_14 | ✏️ | 2-1 | — | — |
+| 01/07 21:13:26 | Camilo | R16_12 | ✏️ | 2-0 | — | — |
+| 01/07 21:12:18 | Osma | R16_12 | 🆕 | 2-0 | — | — |
+| 01/07 21:12:18 | Osma | R16_14 | 🆕 | 1-1 | ✓ | Portugal |
+| 01/07 21:12:18 | Osma | R16_15 | 🆕 | 1-0 | — | — |
+| 01/07 18:07:34 | Helmer | R16_10 | 🆕 | 2-0 | — | — |
 | 01/07 18:03:28 | Vaca | R16_13 | ✏️ | 2-0 | — | — |
 | 01/07 18:03:27 | Vaca | R16_16 | ✏️ | 1-0 | — | — |
 | 01/07 18:03:26 | Vaca | R16_11 | ✏️ | 1-1 | ✓ | — |
